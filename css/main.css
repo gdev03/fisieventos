@@ -1,0 +1,166 @@
+/**
+ * =========================================================================
+ * ESTILOS GLOBALES Y NAVBAR DINÁMICO - FISI EVENTS
+ * =========================================================================
+ * Desarrollado por: Integrante 1 (Arquitectura Base y Layout)
+ * Propósito: Centralizar variables y la estructura del encabezado común.
+ */
+
+/* 1. VARIABLES INSTITUCIONALES UNMSM [cite: 539-546] */
+:root {
+    --rojo-sanmarcos: #7F0000; /* Identidad oficial de la universidad [cite: 540] */
+    --gris-oscuro: #111111;    /* Tipografías principales y contrastes [cite: 541] */
+    --gris-medio: #555555;     /* Textos secundarios y bordes */
+    --gris-claro: #EAEAEA;     /* Líneas divisorias de tablas y modales */
+    --blanco-fondo: #FAFAFA;   /* Fondo general limpio estilo Eventbrite [cite: 542] */
+    --blanco-puro: #FFFFFF;    /* Fondos de tarjetas, navbar y paneles */
+    --verde-exito: #28A745;    /* Botón Registrarse / Estado "Presente" [cite: 543] */
+    --rojo-alerta: #DC3545;    /* Botón Cancelar / Estado "Faltó" / Errores [cite: 544] */
+    --fuente-fisi: 'Inter', system-ui, -apple-system, sans-serif; /* Tipografía limpia [cite: 545] */
+    
+    /* Configuración de Layout Común */
+    --max-width-sitio: 1200px;
+    --borde-radio-std: 8px;
+    --sombra-tarjeta: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 2. RESETEO ESTRUCTURAL GLOBAL */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Evita que los paddings alteren el ancho de cajas */
+}
+
+body {
+    font-family: var(--fuente-fisi); [cite: 545]
+    background-color: var(--blanco-fondo); [cite: 542]
+    color: var(--gris-oscuro); [cite: 541]
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+/* 3. CONTENEDORES DE DISEÑO BASE */
+.container {
+    width: 100%;
+    max-width: var(--max-width-sitio);
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 4. MAQUETACIÓN DE LA BARRA DE NAVEGACIÓN SUPERIOR (NAVBAR) [cite: 547] */
+.main-navbar {
+    background-color: var(--blanco-puro);
+    border-bottom: 1px solid var(--gris-claro);
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Asegura que se mantenga por encima del contenido al hacer scroll */
+    height: 70px;
+}
+
+.nav-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-brand img {
+    height: 45px;
+    width: auto;
+}
+
+.nav-brand h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--rojo-sanmarcos); /* Color principal UNMSM */
+}
+
+/* Clases de Control de Sesión (Maniobradas por JavaScript UI) */
+.nav-auth-area .auth-guest,
+.nav-auth-area .auth-user {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Clase de utilidad crítica para ocultar estados de sesión */
+.hidden {
+    display: none !important;
+}
+
+/* Estilo del Botón de Login Estilo Eventbrite */
+.btn-login {
+    background-color: var(--rojo-sanmarcos);
+    color: var(--blanco-puro);
+    padding: 10px 20px;
+    border-radius: var(--borde-radio-std);
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.btn-login:hover {
+    background-color: #550000; /* Oscurecimiento al pasar el cursor */
+}
+
+/* Menú Desplegable del Usuario Logueado (Dropdown)  */
+.user-menu-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 10px;
+    background-color: var(--blanco-puro);
+    border: 1px solid var(--gris-claro);
+    border-radius: var(--borde-radio-std);
+    box-shadow: var(--sombra-tarjeta);
+    min-width: 180px;
+}
+
+.user-dropdown-menu a,
+.user-dropdown-menu button {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.user-dropdown-menu a:hover,
+.user-dropdown-menu button:hover {
+    background-color: var(--blanco-fondo);
+}
+
+.btn-logout {
+    color: var(--rojo-alerta);
+    border-top: 1px solid var(--gris-claro);
+}
