@@ -1,4 +1,4 @@
-// =========================================
+// ==========================================
 // INSCRIPTIONS.JS
 // GESTIÓN DE INSCRIPCIONES DE ALUMNOS
 // Integrante 3
