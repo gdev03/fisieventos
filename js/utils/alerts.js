@@ -1,21 +1,35 @@
+// ==========================================
+// ALERTS.JS
+// SISTEMA CENTRALIZADO DE MODALES Y ALERTAS
+// Integrante 3
+// ==========================================
+
+
+
+// ==========================================
+// 1. ALERTA SIMPLE
+// ==========================================
+// Muestra una ventana emergente informativa.
+// No devuelve valores.
+// ==========================================
+
 export function mostrarAlerta(
     titulo,
-    mensaje,
-    tipo = "info"
+    mensaje
 ){
 
     const modal = document.createElement("div");
 
-    modal.classList.add("modal-overlay");
+    modal.classList.add("modalOverlay");
 
     modal.innerHTML = `
-        <div class="modal-window">
+        <div class="modalWindow">
 
             <h2>${titulo}</h2>
 
             <p>${mensaje}</p>
 
-            <button id="btnCerrar">
+            <button id="btnCerrarModal">
                 Aceptar
             </button>
 
@@ -25,12 +39,31 @@ export function mostrarAlerta(
     document.body.appendChild(modal);
 
     document
-        .getElementById("btnCerrar")
+        .getElementById("btnCerrarModal")
         .addEventListener("click", () => {
+
             modal.remove();
+
         });
 
 }
+
+
+
+// ==========================================
+// 2. MODAL DE CONFIRMACIÓN
+// ==========================================
+// Muestra una ventana que permite:
+//
+// Confirmar
+// Cancelar
+// No volver a mostrar
+//
+// Devuelve:
+// true  -> confirmar
+// false -> cancelar
+// ==========================================
+
 export function confirmarAccion(
     titulo,
     mensaje
@@ -40,63 +73,81 @@ export function confirmarAccion(
 
         const modal = document.createElement("div");
 
-        modal.classList.add("modal-overlay");
+        modal.classList.add("modalOverlay");
 
         modal.innerHTML = `
-        <div class="modal-window">
+            <div class="modalWindow">
 
-            <h2>${titulo}</h2>
+                <h2>${titulo}</h2>
 
-            <p>${mensaje}</p>
+                <p>${mensaje}</p>
 
-            <label>
-                <input
-                    type="checkbox"
-                    id="noMostrar"
-                >
-                No volver a mostrar
-            </label>
+                <label>
 
-            <button id="btnSi">
-                Confirmar
-            </button>
+                    <input
+                        type="checkbox"
+                        id="checkOmitir"
+                    >
 
-            <button id="btnNo">
-                Cancelar
-            </button>
+                    No volver a mostrar
 
-        </div>
+                </label>
+
+                <div class="modalButtons">
+
+                    <button id="btnConfirmar">
+                        Confirmar
+                    </button>
+
+                    <button id="btnCancelar">
+                        Cancelar
+                    </button>
+
+                </div>
+
+            </div>
         `;
 
         document.body.appendChild(modal);
 
+
+
         document
-            .getElementById("btnSi")
+            .getElementById("btnConfirmar")
             .onclick = ()=>{
 
                 const check =
-                    document.getElementById("noMostrar");
+                    document.getElementById(
+                        "checkOmitir"
+                    );
 
                 if(check.checked){
 
                     localStorage.setItem(
                         "omitirConfirmacion",
-                        true
+                        "true"
                     );
+
                 }
 
                 modal.remove();
 
                 resolve(true);
+
             };
 
+
+
         document
-            .getElementById("btnNo")
+            .getElementById("btnCancelar")
             .onclick = ()=>{
 
                 modal.remove();
 
                 resolve(false);
+
             };
+
     });
+
 }
