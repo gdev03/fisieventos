@@ -1,0 +1,103 @@
+/* ==========================================
+   COMPONENTS.CSS
+   ESTILOS GLOBALES DE COMPONENTES
+   Integrante 3
+========================================== */
+
+
+
+/* ==========================================
+   1. CAPA OSCURA DEL MODAL
+========================================== */
+
+.modalOverlay{
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.6);
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    z-index: 9999;
+
+}
+
+
+
+/* ==========================================
+   2. VENTANA DEL MODAL
+========================================== */
+
+.modalWindow{
+
+    background: white;
+
+    width: 400px;
+
+    padding: 25px;
+
+    border-radius: 10px;
+
+    box-shadow: 0 0 15px rgba(0,0,0,.3);
+
+}
+
+
+
+/* ==========================================
+   3. BOTONES DEL MODAL
+========================================== */
+
+.modalButtons{
+
+    margin-top: 20px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+}
+
+
+
+/* ==========================================
+   4. SPINNER DE CARGA
+========================================== */
+
+.spinner{
+
+    width: 60px;
+    height: 60px;
+
+    border: 6px solid #ccc;
+
+    border-top: 6px solid #7F0000;
+
+    border-radius: 50%;
+
+    animation: girar 1s linear infinite;
+
+}
+
+
+
+@keyframes girar{
+
+    from{
+        transform: rotate(0deg);
+    }
+
+    to{
+        transform: rotate(360deg);
+    }
+
+}
