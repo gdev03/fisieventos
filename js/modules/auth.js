@@ -90,19 +90,14 @@ export function getUsuarioLogueado() {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Valida el código de estudiante UNMSM.
- * Debe ser exclusivamente numérico con longitud entre 8 y 10 caracteres.
- *
- * @param {string} codigo
+ * Valida que el nombre de usuario sea alfanumérico simple.
+ * @param {string} username
  * @returns {{ valido: boolean, mensaje: string }}
  */
-function _validarCodigoEstudiante(codigo) {
-  const regex = /^\d{8,10}$/;
-  if (!codigo || !regex.test(String(codigo).trim())) {
-    return {
-      valido:  false,
-      mensaje: 'El código de estudiante debe contener entre 8 y 10 dígitos numéricos.',
-    };
+function _validarUsername(username) {
+  const regex = /^[a-zA-Z0-9._-]+$/;
+  if (!username || !regex.test(username.trim())) {
+    return { valido: false, mensaje: 'El nombre de usuario no es válido. Usa letras, números o puntos.' };
   }
   return { valido: true, mensaje: '' };
 }
@@ -232,10 +227,10 @@ function _construirPayloadUsuario(uuid, formData) {
  * @param {Object} formData - Datos del formulario (ver _construirPayloadUsuario).
  * @returns {Promise<{exito: boolean, mensaje: string, usuario?: Object}>}
  */
-export async function registrar(email, password, formData) {
+export async function registrar(username, password, formData) {
   try {
     /* ── 1. Validaciones de cliente ─────────────────────────────────────── */
-    const validEmail = _validarEmail(email);
+    const const validEmail = _validarUsername(username);
     if (!validEmail.valido) {
       mostrarAlertaFlotante(validEmail.mensaje, 'error');
       return { exito: false, mensaje: validEmail.mensaje };
@@ -361,10 +356,10 @@ export async function registrar(email, password, formData) {
  * @param {string} password - Contraseña.
  * @returns {Promise<{exito: boolean, mensaje: string, usuario?: Object, role?: string}>}
  */
-export async function iniciarSesion(email, password) {
+export async function iniciarSesion(username, password) {
   try {
     /* ── 1. Validaciones de entrada ─────────────────────────────────────── */
-    const validEmail = _validarEmail(email);
+    const validEmail = _validarEmail(username);
     if (!validEmail.valido) {
       mostrarAlertaFlotante(validEmail.mensaje, 'error');
       return { exito: false, mensaje: validEmail.mensaje };
