@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Evento - FISI Events</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/event-detail.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo-container">
+            <img src="assets/img/logo.png" alt="Logo FISI" class="logo" width="227" height="99">
+            <h1>FISI Events</h1>
+        </div>
+        <nav class="top-navbar">
+            <ul id="nav-links">
+                <li><a href="index.html">Catálogo</a></li>
+                <li><a href="login.html" id="login-link">Iniciar Sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="detail-layout container">
+        <section class="main-content">
+            <div class="back-link-container">
+                <a href="index.html" class="back-link">← Volver al Catálogo</a>
+            </div>
+            
+            <span id="event-badge" class="event-badge">Cargando...</span>
+            <h1 id="event-title">Cargando título del evento...</h1>
+            
+            <div class="event-visual-block">
+                <div class="visual-placeholder">
+                    <span>IMAGEN</span>
+                </div>
+            </div>
+
+            <div class="event-description-block">
+                <h2>Descripción del Evento</h2>
+                <p id="event-description">Cargando descripción detallada...</p>
+            </div>
+
+            <div class="event-expositores-block">
+                <h2>Expositores</h2>
+                <ul id="event-expositores">
+                    </ul>
+            </div>
+        </section>
+
+        <aside class="sidebar-sticky">
+            <div class="registration-card">
+                <h3>Información de Inscripción</h3>
+                
+                <div class="info-item">
+                    <span class="icon">📅</span>
+                    <div>
+                        <strong>Fecha:</strong>
+                        <p id="event-date">--/--/----</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="icon">⏰</span>
+                    <div>
+                        <strong>Horario:</strong>
+                        <p id="event-time">--:-- - --:--</p>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="icon">👥</span>
+                    <div>
+                        <strong>Aforo Disponible:</strong>
+                        <p id="event-aforo">0 / 0 vacantes</p>
+                    </div>
+                </div>
+
+                <button id="btn-accion" class="btn-register-visual">Registrarse</button>
+            </div>
+        </aside>
+    </main>
+
+    <script type="module">
+        import { eventos } from './js/modules/events.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const eventId = parseInt(params.get('id'), 10);
+
+            const evento = eventos.find(e => e.id === eventId);
+
+            if (evento) {
+                document.title = `${evento.titulo} - FISI Events`;
+                document.getElementById('event-title').textContent = evento.titulo;
+                document.getElementById('event-description').textContent = evento.descripcion || "No hay descripción disponible para este evento.";
+                document.getElementById('event-badge').textContent = evento.categoria;
+                document.getElementById('event-badge').className = `event-badge badge-${evento.categoria.toLowerCase()}`;
+                
+                document.getElementById('event-date').textContent = evento.fecha_inicio;
+                document.getElementById('event-time').textContent = `${evento.hora_inicio} - ${evento.hora_fin}`;
+                
+                const capacidad = evento.capacidad_max || "Ilimitado";
+                document.getElementById('event-aforo').textContent = `0 / ${capacidad} vacantes ocupadas`;
+
+                const listaExpositores = document.getElementById('event-expositores');
+                listaExpositores.innerHTML = '';
+                if (evento.expositores && evento.expositores.length > 0) {
+                    evento.expositores.forEach(exp => {
+                        const li = document.createElement('li');
+                        li.textContent = exp;
+                        listaExpositores.appendChild(li);
+                    });
+                } else {
+                    listaExpositores.innerHTML = '<li>Expositor por confirmar</li>';
+                }
+
+                const btnAccion = document.getElementById('btn-accion');
+                const yaInscrito = false; 
+                
+                if (yaInscrito) {
+                    btnAccion.textContent = "Cancelar Inscripción";
+                    btnAccion.className = "btn-register-visual btn-cancelar";
+                } else {
+                    btnAccion.textContent = "Registrarse";
+                    btnAccion.className = "btn-register-visual btn-inscribir";
+                }
+
+            } else {
+                //Error si el ID no es válido
+                document.getElementById('events-container-layout').innerHTML = `
+                    <div class="error-container">
+                        <h2>Error 404: Evento no encontrado</h2>
+                        <p>El evento solicitado no existe o fue cancelado.</p>
+                        <a href="index.html">Volver al catálogo principal</a>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
