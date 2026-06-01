@@ -1,0 +1,540 @@
+/**
+ * css/login.css
+ * FISI Events – Estilos de la página de acceso e inscripción (login.html)
+ * Tarjeta centralizada, pestañas de rol, campos condicionales con transiciones suaves.
+ * Requiere: css/main.css (variables :root)
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 1. LAYOUT GLOBAL DE LA PÁGINA DE LOGIN                                      *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.pagina-login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--blanco-fondo, #FAFAFA);
+  background-image:
+    radial-gradient(ellipse at 10% 10%, rgba(127, 0, 0, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 90%, rgba(127, 0, 0, 0.04) 0%, transparent 55%);
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 2. ENCABEZADO DE LA PÁGINA                                                  *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.75rem 1rem 0;
+  gap: 0.25rem;
+}
+
+.login-header__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--gris-oscuro, #111111);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.login-header__logo:hover {
+  color: var(--rojo-sanmarcos, #7F0000);
+}
+
+.logo-acento {
+  color: var(--rojo-sanmarcos, #7F0000);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.logo-texto strong {
+  color: var(--rojo-sanmarcos, #7F0000);
+}
+
+.login-header__facultad {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 3. ÁREA PRINCIPAL Y TARJETA                                                 *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 3rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 500px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.05),
+    0 8px 24px rgba(0,0,0,0.09),
+    0 20px 40px rgba(0,0,0,0.06);
+  overflow: hidden;
+  /* Borde superior institucional */
+  border-top: 4px solid var(--rojo-sanmarcos, #7F0000);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 4. PESTAÑAS (TABS)                                                          *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 1rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.15s ease;
+  margin-bottom: -1px; /* Superponer el borde inferior de la tab list */
+}
+
+.login-tab:hover {
+  color: var(--rojo-sanmarcos, #7F0000);
+  background: #fdf5f5;
+}
+
+.login-tab--activo {
+  color: var(--rojo-sanmarcos, #7F0000);
+  border-bottom: 3px solid var(--rojo-sanmarcos, #7F0000);
+  background: #ffffff;
+}
+
+.login-tab:focus-visible {
+  outline: 3px solid rgba(127, 0, 0, 0.3);
+  outline-offset: -3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 5. PANELES DE CONTENIDO                                                     *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-panel {
+  padding: 1.75rem;
+  animation: panel-fade-in 0.22s ease;
+}
+
+.login-panel--oculto {
+  display: none;
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 6. GRUPOS DE CAMPOS DEL FORMULARIO                                          *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 400px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-label abbr {
+  text-decoration: none;
+  color: var(--rojo-sanmarcos, #7F0000);
+  margin-left: 2px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.9rem;
+  color: var(--gris-oscuro, #111111);
+  background: #ffffff;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:hover {
+  border-color: #9ca3af;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--rojo-sanmarcos, #7F0000);
+  box-shadow: 0 0 0 3px rgba(127, 0, 0, 0.12);
+}
+
+.form-input.input-error {
+  border-color: var(--rojo-alerta, #DC3545);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.12);
+}
+
+.form-input.input-valido {
+  border-color: var(--verde-exito, #28A745);
+}
+
+.form-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.form-hint {
+  font-size: 0.76rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.form-error {
+  font-size: 0.76rem;
+  color: var(--rojo-alerta, #DC3545);
+  font-weight: 500;
+  min-height: 1rem;
+  display: block;
+}
+
+/* ── Wrapper para input de contraseña con botón toggle ── */
+.input-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password-wrapper .form-input {
+  padding-right: 2.8rem;
+}
+
+.input-password-toggle {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: #6b7280;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.input-password-toggle:hover {
+  color: var(--rojo-sanmarcos, #7F0000);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 7. FIELDSETS                                                                *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.form-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.form-legend {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.85rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-legend::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 8. SELECTOR DE ROL (CARDS RADIO)                                            *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.rol-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.rol-opcion {
+  cursor: pointer;
+}
+
+/* Ocultar radio nativo */
+.rol-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Card visual del rol */
+.rol-opcion-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.9rem 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rol-opcion-card:hover {
+  border-color: rgba(127, 0, 0, 0.4);
+  background: #fdf5f5;
+}
+
+/* Estado seleccionado */
+.rol-radio:checked + .rol-opcion-card {
+  border-color: var(--rojo-sanmarcos, #7F0000);
+  background: #fef0f0;
+  box-shadow: 0 0 0 3px rgba(127, 0, 0, 0.10);
+}
+
+.rol-icono {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.rol-nombre {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+}
+
+.rol-desc {
+  font-size: 0.72rem;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 9. BLOQUES CONDICIONALES CON TRANSICIÓN SUAVE                              *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Técnica: los bloques condicionales (alumno / organizador / nombre-grupo)
+ * usan max-height + opacity para transiciones suaves sin saltos bruscos.
+ * La propiedad `hidden` es gestionada por JS únicamente para accesibilidad;
+ * la transición visual se controla con clases CSS.
+ */
+
+.bloque-alumno,
+.bloque-organizador,
+.bloque-nombre-grupo {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    max-height  0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity     0.28s ease,
+    transform   0.28s ease;
+  /* `margin-bottom` necesita su propia transición para no saltar */
+  margin-bottom: 0;
+  transition-property: max-height, opacity, transform, margin-bottom;
+  transition-duration: 0.38s, 0.28s, 0.28s, 0.38s;
+}
+
+.bloque-alumno.bloque-visible,
+.bloque-organizador.bloque-visible,
+.bloque-nombre-grupo.bloque-visible {
+  max-height: 800px;       /* Valor generoso mayor que el contenido real */
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 0.75rem;
+}
+
+/* El bloque de alumno está visible por defecto al cargar el registro */
+#bloque-alumno {
+  max-height: 800px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 0.75rem;
+}
+
+/* La clase .hidden es aplicada por JS para la gestión de estado */
+.hidden {
+  /* No usar display:none aquí — interferiría con la transición de max-height */
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 10. BOTÓN DE ENVÍO                                                          *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.btn-login-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--rojo-sanmarcos, #7F0000);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.1s ease;
+  margin-top: 0.5rem;
+  letter-spacing: 0.01em;
+}
+
+.btn-login-submit:hover:not(:disabled) {
+  background: #6a0000;
+}
+
+.btn-login-submit:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-login-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 11. TEXTO DE ENLACE AL PIE DEL FORMULARIO                                   *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-footer-text {
+  text-align: center;
+  font-size: 0.83rem;
+  color: #6b7280;
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.link-tab-switch {
+  background: none;
+  border: none;
+  color: var(--rojo-sanmarcos, #7F0000);
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-tab-switch:hover {
+  color: #5a0000;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 12. PIE DE PÁGINA DE LA PÁGINA                                              *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+.login-footer {
+  text-align: center;
+  padding: 1.25rem;
+  font-size: 0.77rem;
+  color: #9ca3af;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ *
+ * 13. RESPONSIVE                                                              *
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 520px) {
+  .login-panel {
+    padding: 1.25rem;
+  }
+
+  .login-card {
+    border-radius: 12px;
+  }
+
+  .rol-selector {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  .rol-selector {
+    grid-template-columns: 1fr;
+  }
+}
