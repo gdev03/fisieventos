@@ -1,0 +1,1444 @@
+/* ================================================================
+   css/dashboards.css
+   Estilos compartidos para dashboard-alumno.html y
+   dashboard-organizador.html — FISI Events
+   Hereda variables de css/main.css (:root)
+================================================================ */
+
+/* ----------------------------------------------------------------
+   1. VARIABLES LOCALES (complementan las globales de main.css)
+---------------------------------------------------------------- */
+:root {
+  --gris-claro: #E8E8E8;
+  --gris-medio: #C4C4C4;
+  --gris-fondo: #F4F4F4;
+  --gris-oscuro-suave: #555555;
+  --sidebar-ancho: 260px;
+  --sidebar-fondo: #1A1A1A;
+  --sidebar-activo: rgba(127, 0, 0, 0.18);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-borde: rgba(255, 255, 255, 0.08);
+  --radio-base: 10px;
+  --radio-sm: 6px;
+  --sombra-card: 0 2px 16px rgba(0, 0, 0, 0.08);
+  --sombra-card-hover: 0 6px 28px rgba(0, 0, 0, 0.13);
+  --transicion-base: 0.22s ease;
+  --verde-toggle: #28A745;
+  --gris-toggle: #EAEAEA;
+  --toggle-ancho: 46px;
+  --toggle-alto: 26px;
+  --toggle-circulo: 20px;
+}
+
+/* ----------------------------------------------------------------
+   2. LAYOUT PRINCIPAL DEL DASHBOARD
+   CSS Grid: sidebar fijo + área de contenido scrollable
+---------------------------------------------------------------- */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-ancho) 1fr;
+  min-height: calc(100vh - 64px); /* Resta la altura del navbar */
+  background-color: var(--blanco-fondo, #FAFAFA);
+}
+
+/* ----------------------------------------------------------------
+   3. SIDEBAR DE NAVEGACIÓN
+---------------------------------------------------------------- */
+.dashboard-sidebar {
+  background-color: var(--sidebar-fondo);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 64px; /* Alinea justo bajo el navbar */
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  border-right: 1px solid var(--sidebar-borde);
+  /* Scroll silencioso */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+
+/* Perfil del usuario en la sidebar */
+.sidebar__perfil {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--sidebar-borde);
+}
+
+.sidebar__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--rojo-sanmarcos, #7F0000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+}
+
+.sidebar__avatar--organizador {
+  background-color: #2C2C6C;
+}
+
+.sidebar__nombre {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #FFFFFF;
+  line-height: 1.3;
+  margin: 0 0 2px;
+  /* Truncar si el nombre es muy largo */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.sidebar__rol {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.sidebar__rol--organizador {
+  color: rgba(100, 149, 237, 0.75);
+}
+
+/* Ítems de navegación */
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 12px;
+  flex: 1;
+}
+
+.sidebar__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radio-sm);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color var(--transicion-base),
+              color var(--transicion-base);
+  line-height: 1.4;
+}
+
+.sidebar__nav-item:hover {
+  background-color: var(--sidebar-hover);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar__nav-item--activo {
+  background-color: var(--sidebar-activo);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.sidebar__nav-item--activo .sidebar__nav-icono {
+  stroke: var(--rojo-sanmarcos, #7F0000);
+  filter: brightness(1.8);
+}
+
+.sidebar__nav-icono {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition: stroke var(--transicion-base);
+}
+
+/* Footer del sidebar */
+.sidebar__footer {
+  padding: 16px 12px 20px;
+  border-top: 1px solid var(--sidebar-borde);
+}
+
+.sidebar__enlace-volver {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  transition: color var(--transicion-base);
+  padding: 6px 4px;
+}
+
+.sidebar__enlace-volver:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ----------------------------------------------------------------
+   4. ÁREA DE CONTENIDO PRINCIPAL
+---------------------------------------------------------------- */
+.dashboard-contenido {
+  padding: 32px 36px;
+  overflow-y: auto;
+  background-color: var(--blanco-fondo, #FAFAFA);
+}
+
+/* ----------------------------------------------------------------
+   5. SISTEMA DE PESTAÑAS (Tab Panels)
+---------------------------------------------------------------- */
+.tab-panel {
+  animation: fadeInPanel 0.25s ease both;
+}
+
+.tab-panel.oculto {
+  display: none !important;
+}
+
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ----------------------------------------------------------------
+   6. ENCABEZADO DEL PANEL
+---------------------------------------------------------------- */
+.dashboard-encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.dashboard-titulo {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.dashboard-subtitulo {
+  font-size: 0.9rem;
+  color: var(--gris-oscuro-suave);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ----------------------------------------------------------------
+   7. TARJETAS DE MÉTRICAS ANALÍTICAS
+---------------------------------------------------------------- */
+.dashboard-metricas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.metrica-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  box-shadow: var(--sombra-card);
+  transition: box-shadow var(--transicion-base);
+}
+
+.metrica-card:hover {
+  box-shadow: var(--sombra-card-hover);
+}
+
+.metrica-card--sm {
+  padding: 10px 14px;
+  min-width: 80px;
+}
+
+.metrica-card--destacada {
+  border-color: var(--rojo-sanmarcos, #7F0000);
+  border-width: 2px;
+}
+
+.metrica-card--verde {
+  border-color: var(--verde-exito, #28A745);
+}
+
+.metrica-card__numero {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--gris-oscuro, #111111);
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.metrica-card--sm .metrica-card__numero {
+  font-size: 1.3rem;
+}
+
+.metrica-card--destacada .metrica-card__numero {
+  color: var(--rojo-sanmarcos, #7F0000);
+}
+
+.metrica-card--verde .metrica-card__numero {
+  color: var(--verde-exito, #28A745);
+}
+
+.metrica-card__etiqueta {
+  font-size: 0.72rem;
+  color: var(--gris-oscuro-suave);
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ----------------------------------------------------------------
+   8. GRILLA DE TARJETAS DE EVENTOS INSCRITOS (Dashboard Alumno)
+---------------------------------------------------------------- */
+.eventos-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.evento-tarjeta {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  padding: 20px;
+  box-shadow: var(--sombra-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow var(--transicion-base),
+              transform var(--transicion-base);
+}
+
+.evento-tarjeta:hover {
+  box-shadow: var(--sombra-card-hover);
+  transform: translateY(-2px);
+}
+
+.evento-tarjeta__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.evento-tarjeta__categoria {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gris-oscuro-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.evento-tarjeta__titulo {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+  margin: 0;
+  line-height: 1.4;
+  /* Limitar a 2 líneas */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.evento-tarjeta__detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.evento-tarjeta__detalle-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  color: var(--gris-oscuro-suave);
+}
+
+.evento-tarjeta__detalle-item svg {
+  flex-shrink: 0;
+  stroke: var(--gris-medio);
+}
+
+.evento-tarjeta__acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* ----------------------------------------------------------------
+   9. TABLAS DE DATOS ACADÉMICOS
+---------------------------------------------------------------- */
+.tabla-wrapper {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  box-shadow: var(--sombra-card);
+  overflow: hidden;
+  overflow-x: auto; /* Scroll horizontal en pantallas pequeñas */
+}
+
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.875rem;
+}
+
+/* Encabezados de tabla */
+.tabla-datos thead tr {
+  background-color: var(--gris-fondo);
+  border-bottom: 2px solid var(--gris-claro);
+}
+
+.tabla-datos thead th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gris-oscuro-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Filas alternas sombreadas */
+.tabla-datos tbody .fila-par {
+  background-color: #FFFFFF;
+}
+
+.tabla-datos tbody .fila-impar {
+  background-color: #FAFAFA;
+}
+
+/* Hover sobre filas */
+.tabla-datos tbody tr:hover {
+  background-color: rgba(127, 0, 0, 0.03);
+  transition: background-color 0.15s ease;
+}
+
+.tabla-datos tbody tr.fila--actualizando {
+  background-color: rgba(40, 167, 69, 0.06);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* Celdas */
+.tabla-celda {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gris-claro);
+  vertical-align: middle;
+  color: var(--gris-oscuro, #111111);
+  line-height: 1.4;
+}
+
+.tabla-datos tbody tr:last-child .tabla-celda {
+  border-bottom: none;
+}
+
+.tabla-celda--titulo {
+  font-weight: 600;
+  max-width: 280px;
+}
+
+.tabla-celda--numero {
+  color: var(--gris-oscuro-suave);
+  text-align: center;
+  width: 44px;
+}
+
+.tabla-celda--horario {
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: var(--gris-oscuro-suave);
+}
+
+.tabla-celda--nombre {
+  font-weight: 600;
+  min-width: 180px;
+}
+
+.tabla-celda--estado {
+  text-align: center;
+}
+
+.tabla-celda--switch {
+  text-align: center;
+  width: 80px;
+}
+
+.tabla-celda--acciones {
+  white-space: nowrap;
+}
+
+.col-asistencia {
+  text-align: center;
+  width: 80px;
+}
+
+/* Enlace dentro de tabla */
+.tabla-enlace-evento {
+  color: var(--rojo-sanmarcos, #7F0000);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transicion-base);
+}
+
+.tabla-enlace-evento:hover {
+  text-decoration: underline;
+  color: #9B0000;
+}
+
+/* Categoría dentro de tabla */
+.tabla-categoria {
+  display: inline-block;
+  background-color: var(--gris-fondo);
+  color: var(--gris-oscuro-suave);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+}
+
+/* Tabla de asistencia específica */
+.tabla-asistencia thead th:last-child {
+  text-align: center;
+}
+
+/* ----------------------------------------------------------------
+   10. BADGES DE ESTADO Y ASISTENCIA
+---------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* Asistencia */
+.badge--asistio {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #1A7D38;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.badge--no-asistio {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #b02a37;
+  border: 1px solid rgba(220, 53, 69, 0.25);
+}
+
+/* Estados del evento */
+.badge--programado {
+  background-color: rgba(52, 115, 222, 0.1);
+  color: #2558B5;
+  border: 1px solid rgba(52, 115, 222, 0.25);
+}
+
+.badge--en-curso {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #1A7D38;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  /* Indicador pulsante sutil */
+  animation: pulseEnCurso 2.4s infinite;
+}
+
+@keyframes pulseEnCurso {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.12); }
+}
+
+.badge--finalizado {
+  background-color: rgba(100, 100, 100, 0.1);
+  color: #555555;
+  border: 1px solid rgba(100, 100, 100, 0.2);
+}
+
+/* ----------------------------------------------------------------
+   11. TOGGLE SWITCH DE ASISTENCIA (Estilo iOS)
+---------------------------------------------------------------- */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Input real oculto (accesible) */
+.toggle-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Pista del toggle */
+.toggle-switch__slider {
+  position: relative;
+  display: inline-block;
+  width: var(--toggle-ancho);
+  height: var(--toggle-alto);
+  background-color: var(--gris-toggle);
+  border-radius: 50px;
+  transition: background-color 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.28s ease;
+  flex-shrink: 0;
+}
+
+/* Círculo deslizante */
+.toggle-switch__slider::before {
+  content: '';
+  position: absolute;
+  width: var(--toggle-circulo);
+  height: var(--toggle-circulo);
+  left: 3px;
+  top: 3px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22),
+              0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estado ACTIVO (asistió) */
+.toggle-switch__input:checked + .toggle-switch__slider {
+  background-color: var(--verde-toggle);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
+
+.toggle-switch__input:checked + .toggle-switch__slider::before {
+  transform: translateX(calc(var(--toggle-ancho) - var(--toggle-circulo) - 6px));
+}
+
+/* Focus visible para accesibilidad */
+.toggle-switch__input:focus-visible + .toggle-switch__slider {
+  outline: 2px solid var(--rojo-sanmarcos, #7F0000);
+  outline-offset: 2px;
+}
+
+/* Hover sobre switch habilitado */
+.toggle-switch:not(.toggle-switch--disabled):hover .toggle-switch__slider {
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08);
+}
+
+.toggle-switch:not(.toggle-switch--disabled):hover .toggle-switch__input:checked + .toggle-switch__slider {
+  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+}
+
+/* ----------------------------------------------------------------
+   12. FORMULARIO DE CREACIÓN DE EVENTOS
+---------------------------------------------------------------- */
+.form-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  padding: 32px;
+  box-shadow: var(--sombra-card);
+  max-width: 780px;
+}
+
+.form-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 28px;
+}
+
+.form-fieldset:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-legend {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gris-oscuro-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gris-claro);
+  width: 100%;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.form-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.form-grupo:last-child {
+  margin-bottom: 0;
+}
+
+.form-grupo--deshabilitado {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.form-fila-doble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gris-oscuro, #111111);
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+.form-label--requerido::after {
+  content: ' *';
+  color: var(--rojo-alerta, #DC3545);
+  font-weight: 700;
+}
+
+.form-label-opcional {
+  font-weight: 400;
+  color: var(--gris-oscuro-suave);
+  font-size: 0.8rem;
+}
+
+.form-input,
+.form-select {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.9rem;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gris-claro);
+  border-radius: var(--radio-sm);
+  background-color: #FFFFFF;
+  color: var(--gris-oscuro, #111111);
+  outline: none;
+  transition: border-color 0.18s ease,
+              box-shadow 0.18s ease;
+  width: 100%;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23555' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+}
+
+.form-select--grande {
+  font-size: 0.95rem;
+  padding: 12px 16px;
+  flex: 1;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--rojo-sanmarcos, #7F0000);
+  box-shadow: 0 0 0 3px rgba(127, 0, 0, 0.1);
+}
+
+.form-input:disabled {
+  background-color: var(--gris-fondo);
+  color: var(--gris-oscuro-suave);
+  cursor: not-allowed;
+}
+
+.form-input--error {
+  border-color: var(--rojo-alerta, #DC3545) !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+}
+
+.form-ayuda {
+  font-size: 0.78rem;
+  color: var(--gris-oscuro-suave);
+  line-height: 1.4;
+}
+
+.form-error {
+  font-size: 0.8rem;
+  color: var(--rojo-alerta, #DC3545);
+  font-weight: 500;
+}
+
+/* Checkbox personalizado de vacantes ilimitadas */
+.form-grupo--checkbox {
+  margin-bottom: 20px;
+}
+
+.form-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 16px;
+  background-color: var(--gris-fondo);
+  border: 1.5px solid var(--gris-claro);
+  border-radius: var(--radio-sm);
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.form-checkbox-label:hover {
+  border-color: var(--gris-medio);
+  background-color: #EFEFEF;
+}
+
+.form-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.form-checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gris-medio);
+  border-radius: 5px;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+  margin-top: 2px;
+}
+
+.form-checkbox:checked + .form-checkbox-custom {
+  background-color: var(--rojo-sanmarcos, #7F0000);
+  border-color: var(--rojo-sanmarcos, #7F0000);
+}
+
+.form-checkbox:checked + .form-checkbox-custom::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #FFFFFF;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+}
+
+.form-checkbox:focus-visible + .form-checkbox-custom {
+  outline: 2px solid var(--rojo-sanmarcos, #7F0000);
+  outline-offset: 2px;
+}
+
+.form-checkbox-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gris-oscuro, #111111);
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+.form-checkbox-texto small {
+  font-weight: 400;
+  color: var(--gris-oscuro-suave);
+  font-size: 0.78rem;
+}
+
+/* Footer del formulario */
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--gris-claro);
+  margin-top: 24px;
+}
+
+/* Notificación del formulario */
+.form-notificacion {
+  padding: 14px 18px;
+  border-radius: var(--radio-sm);
+  font-size: 0.875rem;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: slideInNotif 0.25s ease;
+}
+
+@keyframes slideInNotif {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-notificacion--exito {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #1A7D38;
+}
+
+.form-notificacion--error {
+  background-color: rgba(220, 53, 69, 0.08);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  color: #b02a37;
+}
+
+/* ----------------------------------------------------------------
+   13. SELECTOR Y PANEL DE MONITOREO
+---------------------------------------------------------------- */
+.selector-evento-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--sombra-card);
+}
+
+.selector-evento-fila {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Cabecera del evento en monitoreo */
+.evento-monitor-header {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-base);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--sombra-card);
+  flex-wrap: wrap;
+}
+
+.evento-monitor-titulo {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+  margin: 0 0 6px;
+}
+
+.evento-monitor-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--gris-oscuro-suave);
+  flex-wrap: wrap;
+}
+
+.separador {
+  color: var(--gris-claro);
+  font-size: 1rem;
+}
+
+.evento-monitor-metricas {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Avisos de estado */
+.aviso-finalizado,
+.aviso-programado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--radio-sm);
+  font-size: 0.875rem;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  margin-bottom: 16px;
+}
+
+.aviso-finalizado {
+  background-color: rgba(100, 100, 100, 0.08);
+  border: 1px solid rgba(100, 100, 100, 0.2);
+  color: #444444;
+}
+
+.aviso-programado {
+  background-color: rgba(52, 115, 222, 0.08);
+  border: 1px solid rgba(52, 115, 222, 0.2);
+  color: #2558B5;
+}
+
+/* Panel de reporte */
+.panel-acciones-reporte {
+  background-color: #FFFFFF;
+  border: 1px solid var(--gris-claro);
+  border-radius: var(--radio-sm);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.panel-acciones-reporte__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+.panel-acciones-reporte__info strong {
+  font-size: 0.9rem;
+  color: var(--gris-oscuro, #111111);
+}
+
+.panel-acciones-reporte__info span {
+  font-size: 0.8rem;
+  color: var(--gris-oscuro-suave);
+}
+
+/* ----------------------------------------------------------------
+   14. BOTONES
+---------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radio-sm);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.2;
+  transition: background-color var(--transicion-base),
+              color var(--transicion-base),
+              box-shadow var(--transicion-base),
+              opacity var(--transicion-base);
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn--primario {
+  background-color: var(--rojo-sanmarcos, #7F0000);
+  color: #FFFFFF;
+}
+.btn--primario:hover {
+  background-color: #9B0000;
+  box-shadow: 0 4px 14px rgba(127, 0, 0, 0.3);
+}
+
+.btn--secundario {
+  background-color: var(--gris-fondo);
+  color: var(--gris-oscuro, #111111);
+  border: 1.5px solid var(--gris-claro);
+}
+.btn--secundario:hover {
+  background-color: #ECECEC;
+}
+
+.btn--outline {
+  background-color: transparent;
+  color: var(--gris-oscuro, #111111);
+  border: 1.5px solid var(--gris-claro);
+}
+.btn--outline:hover {
+  border-color: var(--gris-medio);
+  background-color: var(--gris-fondo);
+}
+
+.btn--peligro {
+  background-color: var(--rojo-alerta, #DC3545);
+  color: #FFFFFF;
+}
+.btn--peligro:hover {
+  background-color: #C82333;
+}
+.btn--peligro:disabled {
+  background-color: var(--gris-medio);
+}
+
+.btn--exportar {
+  background-color: #1A5E36;
+  color: #FFFFFF;
+  gap: 8px;
+}
+.btn--exportar:hover {
+  background-color: #145228;
+  box-shadow: 0 4px 14px rgba(26, 94, 54, 0.3);
+}
+
+.btn--lg {
+  padding: 12px 28px;
+  font-size: 0.95rem;
+}
+
+.btn--sm {
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  border-radius: 5px;
+}
+
+/* ----------------------------------------------------------------
+   15. ESTADOS DE CARGA Y VACÍO
+---------------------------------------------------------------- */
+.estado-carga {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 20px;
+  color: var(--gris-oscuro-suave);
+  font-size: 0.9rem;
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+}
+
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--gris-oscuro-suave);
+}
+
+.estado-vacio svg {
+  stroke: var(--gris-medio);
+  margin-bottom: 4px;
+}
+
+.estado-vacio h3 {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+  margin: 0;
+}
+
+.estado-vacio p {
+  font-size: 0.875rem;
+  color: var(--gris-oscuro-suave);
+  margin: 0;
+  max-width: 380px;
+}
+
+/* Spinner de carga */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--gris-claro);
+  border-top-color: var(--rojo-sanmarcos, #7F0000);
+  border-radius: 50%;
+  animation: girarSpinner 0.8s linear infinite;
+}
+
+@keyframes girarSpinner {
+  to { transform: rotate(360deg); }
+}
+
+/* ----------------------------------------------------------------
+   16. MODAL DE CONFIRMACIÓN
+---------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  padding: 20px;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-caja {
+  background-color: #FFFFFF;
+  border-radius: var(--radio-base);
+  padding: 32px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-icono {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.modal-icono--alerta {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--rojo-alerta, #DC3545);
+}
+
+.modal-titulo {
+  font-family: var(--fuente-fisi, 'Inter', sans-serif);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--gris-oscuro, #111111);
+  margin: 0;
+}
+
+.modal-mensaje {
+  font-size: 0.9rem;
+  color: var(--gris-oscuro-suave);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.modal-evento-nombre {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--gris-oscuro, #111111);
+  background-color: var(--gris-fondo);
+  padding: 10px 16px;
+  border-radius: var(--radio-sm);
+  border: 1px solid var(--gris-claro);
+  margin: 0;
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ----------------------------------------------------------------
+   17. CLASE UTILITARIA: OCULTO
+---------------------------------------------------------------- */
+.oculto {
+  display: none !important;
+}
+
+/* ----------------------------------------------------------------
+   18. RESPONSIVE — Tablet (≤ 900px)
+---------------------------------------------------------------- */
+@media screen and (max-width: 900px) {
+  .dashboard-layout {
+    grid-template-columns: 220px 1fr;
+  }
+
+  .dashboard-contenido {
+    padding: 24px 20px;
+  }
+
+  .form-fila-doble {
+    grid-template-columns: 1fr;
+  }
+
+  .eventos-grilla {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+/* ----------------------------------------------------------------
+   19. RESPONSIVE — Mobile (≤ 680px)
+   Layout cambia a una sola columna; sidebar se convierte en
+   barra horizontal inferior en móviles pequeños
+---------------------------------------------------------------- */
+@media screen and (max-width: 680px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid var(--sidebar-borde);
+    padding: 0 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .sidebar__perfil {
+    display: none; /* Ocultar en móvil para ahorrar espacio */
+  }
+
+  .sidebar__nav {
+    flex-direction: row;
+    padding: 8px 0;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .sidebar__nav-item {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .sidebar__footer {
+    display: none;
+  }
+
+  .dashboard-contenido {
+    padding: 20px 16px;
+  }
+
+  .form-card {
+    padding: 20px 16px;
+  }
+
+  .form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .evento-monitor-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .evento-monitor-metricas {
+    flex-wrap: wrap;
+  }
+
+  .panel-acciones-reporte {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .panel-acciones-reporte .btn--exportar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .selector-evento-fila {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selector-evento-fila .btn {
+    align-self: flex-end;
+  }
+
+  .tabla-datos thead th,
+  .tabla-celda {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .modal-caja {
+    padding: 24px 20px;
+  }
+
+  .dashboard-metricas {
+    gap: 8px;
+  }
+
+  .metrica-card {
+    padding: 10px 14px;
+    min-width: 80px;
+  }
+
+  .metrica-card__numero {
+    font-size: 1.3rem;
+  }
+}
