@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Panel — FISI Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboards.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVBAR COMÚN — controlado dinámicamente por ui-global.js
+  ============================================================ -->
+  <header class="navbar" id="navbar-principal">
+    <div class="navbar__contenedor">
+      <a href="index.html" class="navbar__marca">
+        <span class="navbar__marca-sigla">FISI</span>
+        <span class="navbar__marca-nombre">Events</span>
+      </a>
+      <nav class="navbar__nav" id="nav-links">
+        <a href="index.html" class="navbar__enlace">Catálogo</a>
+        <!-- ui-global.js inyecta aquí el menú de usuario autenticado -->
+        <div id="navbar-auth-container">
+          <a href="login.html" class="navbar__enlace navbar__enlace--cta">Iniciar Sesión</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL DEL DASHBOARD ALUMNO
+  ============================================================ -->
+  <main class="dashboard-layout" id="dashboard-alumno-main">
+
+    <!-- Barra lateral de navegación del panel -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar__perfil">
+        <div class="sidebar__avatar" id="sidebar-avatar">
+          <span id="sidebar-avatar-iniciales">--</span>
+        </div>
+        <div class="sidebar__info">
+          <p class="sidebar__nombre" id="sidebar-nombre-usuario">Cargando...</p>
+          <p class="sidebar__rol">Estudiante</p>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button
+          class="sidebar__nav-item sidebar__nav-item--activo"
+          data-tab="inscripciones"
+          id="tab-btn-inscripciones"
+          aria-selected="true"
+          role="tab"
+        >
+          <svg class="sidebar__nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Mis Inscripciones
+        </button>
+        <button
+          class="sidebar__nav-item"
+          data-tab="historial"
+          id="tab-btn-historial"
+          aria-selected="false"
+          role="tab"
+        >
+          <svg class="sidebar__nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Historial de Actividades
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <a href="index.html" class="sidebar__enlace-volver">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Volver al Catálogo
+        </a>
+      </div>
+    </aside>
+
+    <!-- Área principal de contenido con pestañas -->
+    <section class="dashboard-contenido" role="tabpanel">
+
+      <!-- ======================================================
+           PESTAÑA 1: MIS INSCRIPCIONES ACTIVAS
+      ====================================================== -->
+      <div class="tab-panel tab-panel--activo" id="panel-inscripciones" data-panel="inscripciones">
+        <div class="dashboard-encabezado">
+          <div>
+            <h1 class="dashboard-titulo">Mis Inscripciones</h1>
+            <p class="dashboard-subtitulo">Eventos vigentes en los que estás registrado</p>
+          </div>
+          <div class="dashboard-metricas" id="metricas-inscripciones">
+            <div class="metrica-card">
+              <span class="metrica-card__numero" id="total-inscripciones">0</span>
+              <span class="metrica-card__etiqueta">Eventos activos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div class="estado-carga" id="carga-inscripciones">
+          <div class="spinner"></div>
+          <p>Cargando tus inscripciones...</p>
+        </div>
+
+        <!-- Estado vacío -->
+        <div class="estado-vacio oculto" id="vacio-inscripciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h3>No tienes inscripciones vigentes</h3>
+          <p>Explora el catálogo y regístrate en los eventos que te interesen.</p>
+          <a href="index.html" class="btn btn--primario">Ver Catálogo</a>
+        </div>
+
+        <!-- Grilla de tarjetas de eventos inscritos -->
+        <div class="eventos-grilla" id="grilla-inscripciones">
+          <!-- Las tarjetas se inyectan dinámicamente por JS -->
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PESTAÑA 2: HISTORIAL DE ACTIVIDADES
+      ====================================================== -->
+      <div class="tab-panel oculto" id="panel-historial" data-panel="historial">
+        <div class="dashboard-encabezado">
+          <div>
+            <h1 class="dashboard-titulo">Historial de Actividades</h1>
+            <p class="dashboard-subtitulo">Registro completo de eventos pasados y tu participación</p>
+          </div>
+          <div class="dashboard-metricas" id="metricas-historial">
+            <div class="metrica-card">
+              <span class="metrica-card__numero" id="total-asistidos">0</span>
+              <span class="metrica-card__etiqueta">Eventos asistidos</span>
+            </div>
+            <div class="metrica-card">
+              <span class="metrica-card__numero" id="total-no-asistidos">0</span>
+              <span class="metrica-card__etiqueta">No asistidos</span>
+            </div>
+            <div class="metrica-card metrica-card--destacada">
+              <span class="metrica-card__numero" id="porcentaje-asistencia">0%</span>
+              <span class="metrica-card__etiqueta">Tasa de asistencia</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div class="estado-carga" id="carga-historial">
+          <div class="spinner"></div>
+          <p>Cargando tu historial...</p>
+        </div>
+
+        <!-- Estado vacío -->
+        <div class="estado-vacio oculto" id="vacio-historial">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <h3>Aún no tienes actividades en tu historial</h3>
+          <p>Aquí aparecerán los eventos finalizados en los que estuviste inscrito.</p>
+        </div>
+
+        <!-- Tabla responsiva de historial -->
+        <div class="tabla-wrapper oculto" id="wrapper-historial">
+          <table class="tabla-datos" id="tabla-historial" aria-label="Historial de actividades">
+            <thead>
+              <tr>
+                <th scope="col">Evento</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Horario</th>
+                <th scope="col">Estado de Asistencia</th>
+              </tr>
+            </thead>
+            <tbody id="historial-tbody">
+              <!-- Las filas se inyectan dinámicamente por JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ============================================================
+       MODAL DE CONFIRMACIÓN: CANCELAR INSCRIPCIÓN
+  ============================================================ -->
+  <div class="modal-overlay oculto" id="modal-cancelar-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-cancelar-titulo">
+    <div class="modal-caja">
+      <div class="modal-icono modal-icono--alerta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <h2 class="modal-titulo" id="modal-cancelar-titulo">Cancelar Inscripción</h2>
+      <p class="modal-mensaje" id="modal-cancelar-mensaje">
+        ¿Estás seguro de que deseas cancelar tu inscripción en este evento?
+        Esta acción liberará tu cupo y no podrá deshacerse fácilmente.
+      </p>
+      <p class="modal-evento-nombre" id="modal-cancelar-evento-nombre"></p>
+      <div class="modal-acciones">
+        <button class="btn btn--secundario" id="btn-cancelar-no">Mantener Inscripción</button>
+        <button class="btn btn--peligro" id="btn-cancelar-confirmar">Sí, Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS — Orden de carga crítico
+  ============================================================ -->
+  <script type="module">
+    import { CONFIG_SISTEMA, STORAGE_KEYS } from './js/config.js';
+    import { getUsuarioLogueado } from './js/ui-global.js';
+    import { obtenerInscripcionesAlumno, cancelarInscripcion } from './js/modules/inscriptions.js';
+    import { obtenerHistorialAsistencia } from './js/modules/attendance.js';
+
+    // ----------------------------------------------------------------
+    // ESTADO LOCAL DEL MÓDULO
+    // ----------------------------------------------------------------
+    let usuarioActual = null;
+    let eventoPendienteCancelacion = null;
+
+    // ----------------------------------------------------------------
+    // INICIALIZACIÓN: Verificar sesión y renderizar datos
+    // ----------------------------------------------------------------
+    async function inicializar() {
+      try {
+        usuarioActual = getUsuarioLogueado();
+
+        if (!usuarioActual) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (usuarioActual.role !== CONFIG_SISTEMA.ROLES.ALUMNO) {
+          window.location.href = 'dashboard-organizador.html';
+          return;
+        }
+
+        pintarPerfilSidebar(usuarioActual);
+        await Promise.all([
+          cargarInscripciones(),
+          cargarHistorial()
+        ]);
+
+      } catch (error) {
+        console.error('[DashboardAlumno] Error en inicialización:', error);
+        mostrarErrorGeneral('Ocurrió un error al cargar tu panel. Intenta recargar la página.');
+      }
+    }
+
+    // ----------------------------------------------------------------
+    // SIDEBAR: Pinta nombre e iniciales del usuario
+    // ----------------------------------------------------------------
+    function pintarPerfilSidebar(usuario) {
+      const elNombre = document.getElementById('sidebar-nombre-usuario');
+      const elIniciales = document.getElementById('sidebar-avatar-iniciales');
+
+      const nombreCompleto = `${usuario.firstName} ${usuario.lastName}`;
+      elNombre.textContent = nombreCompleto;
+
+      const iniciales = `${(usuario.firstName || '?')[0]}${(usuario.lastName || '?')[0]}`.toUpperCase();
+      elIniciales.textContent = iniciales;
+    }
+
+    // ----------------------------------------------------------------
+    // PESTAÑA 1: Cargar y renderizar inscripciones activas
+    // ----------------------------------------------------------------
+    async function cargarInscripciones() {
+      const elCarga = document.getElementById('carga-inscripciones');
+      const elVacio = document.getElementById('vacio-inscripciones');
+      const elGrilla = document.getElementById('grilla-inscripciones');
+      const elTotal = document.getElementById('total-inscripciones');
+
+      try {
+        elCarga.classList.remove('oculto');
+        elVacio.classList.add('oculto');
+        elGrilla.innerHTML = '';
+
+        const inscripciones = await obtenerInscripcionesAlumno(usuarioActual.id);
+
+        elCarga.classList.add('oculto');
+
+        const vigentes = inscripciones.filter(
+          insc => insc.estado !== CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO
+        );
+
+        elTotal.textContent = vigentes.length;
+
+        if (vigentes.length === 0) {
+          elVacio.classList.remove('oculto');
+          return;
+        }
+
+        vigentes.forEach(evento => {
+          const tarjeta = crearTarjetaInscripcion(evento);
+          elGrilla.appendChild(tarjeta);
+        });
+
+      } catch (error) {
+        console.error('[DashboardAlumno] Error cargando inscripciones:', error);
+        elCarga.classList.add('oculto');
+        elVacio.classList.remove('oculto');
+      }
+    }
+
+    // ----------------------------------------------------------------
+    // Fábrica de tarjeta de inscripción activa
+    // ----------------------------------------------------------------
+    function crearTarjetaInscripcion(evento) {
+      const tarjeta = document.createElement('article');
+      tarjeta.className = 'evento-tarjeta';
+      tarjeta.setAttribute('data-event-id', evento.eventId);
+
+      const fechaFormateada = formatearFecha(evento.startDate);
+      const badgeEstado = generarBadgeEstado(evento.estado);
+      const categoriaNombre = evento.category
+        ? evento.category.charAt(0).toUpperCase() + evento.category.slice(1)
+        : 'Evento';
+
+      tarjeta.innerHTML = `
+        <div class="evento-tarjeta__cabecera">
+          <span class="evento-tarjeta__categoria">${categoriaNombre}</span>
+          ${badgeEstado}
+        </div>
+        <h3 class="evento-tarjeta__titulo">${escapeHtml(evento.title)}</h3>
+        <div class="evento-tarjeta__detalles">
+          <div class="evento-tarjeta__detalle-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>${fechaFormateada}</span>
+          </div>
+          <div class="evento-tarjeta__detalle-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>${evento.startTime || 'Por confirmar'} — ${evento.endTime || ''}</span>
+          </div>
+        </div>
+        <div class="evento-tarjeta__acciones">
+          <a href="evento-detalle.html?id=${evento.eventId}" class="btn btn--outline btn--sm">
+            Ver Detalles
+          </a>
+          <button
+            class="btn btn--peligro btn--sm btn-cancelar-inscripcion"
+            data-event-id="${evento.eventId}"
+            data-event-titulo="${escapeHtml(evento.title)}"
+            ${evento.estado === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO ? 'disabled title="No puedes cancelar durante el evento"' : ''}
+          >
+            Cancelar Inscripción
+          </button>
+        </div>
+      `;
+
+      return tarjeta;
+    }
+
+    // ----------------------------------------------------------------
+    // PESTAÑA 2: Cargar y renderizar historial de asistencia
+    // ----------------------------------------------------------------
+    async function cargarHistorial() {
+      const elCarga = document.getElementById('carga-historial');
+      const elVacio = document.getElementById('vacio-historial');
+      const elWrapper = document.getElementById('wrapper-historial');
+      const elTbody = document.getElementById('historial-tbody');
+
+      try {
+        elCarga.classList.remove('oculto');
+        elVacio.classList.add('oculto');
+        elWrapper.classList.add('oculto');
+        elTbody.innerHTML = '';
+
+        const historial = await obtenerHistorialAsistencia(usuarioActual.id);
+
+        elCarga.classList.add('oculto');
+
+        const finalizados = historial.filter(
+          item => item.estado === CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO
+        );
+
+        if (finalizados.length === 0) {
+          elVacio.classList.remove('oculto');
+          actualizarMetricasHistorial(0, 0);
+          return;
+        }
+
+        elWrapper.classList.remove('oculto');
+
+        let totalAsistidos = 0;
+        let totalNoAsistidos = 0;
+
+        finalizados.forEach((item, index) => {
+          const fila = crearFilaHistorial(item, index);
+          elTbody.appendChild(fila);
+
+          if (item.asistio === true) {
+            totalAsistidos++;
+          } else {
+            totalNoAsistidos++;
+          }
+        });
+
+        actualizarMetricasHistorial(totalAsistidos, totalNoAsistidos);
+
+      } catch (error) {
+        console.error('[DashboardAlumno] Error cargando historial:', error);
+        elCarga.classList.add('oculto');
+        elVacio.classList.remove('oculto');
+      }
+    }
+
+    // ----------------------------------------------------------------
+    // Fábrica de fila de historial con badge de asistencia
+    // ----------------------------------------------------------------
+    function crearFilaHistorial(item, index) {
+      const fila = document.createElement('tr');
+      fila.className = index % 2 === 0 ? 'fila-par' : 'fila-impar';
+
+      const fechaFormateada = formatearFecha(item.startDate);
+      const horario = item.startTime
+        ? `${item.startTime}${item.endTime ? ' — ' + item.endTime : ''}`
+        : 'Sin horario registrado';
+
+      const categoriaNombre = item.category
+        ? item.category.charAt(0).toUpperCase() + item.category.slice(1)
+        : '—';
+
+      // Badge de asistencia: verde si asistio=true, rojo si asistio=false
+      const badgeAsistencia = item.asistio === true
+        ? `<span class="badge badge--asistio" role="status" aria-label="Asistió al evento">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12">
+               <polyline points="20 6 9 17 4 12"></polyline>
+             </svg>
+             Asistió
+           </span>`
+        : `<span class="badge badge--no-asistio" role="status" aria-label="No asistió al evento">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12">
+               <line x1="18" y1="6" x2="6" y2="18"></line>
+               <line x1="6" y1="6" x2="18" y2="18"></line>
+             </svg>
+             No asistió
+           </span>`;
+
+      fila.innerHTML = `
+        <td class="tabla-celda tabla-celda--titulo">
+          <a href="evento-detalle.html?id=${item.eventId}" class="tabla-enlace-evento">
+            ${escapeHtml(item.title)}
+          </a>
+        </td>
+        <td class="tabla-celda">
+          <span class="tabla-categoria">${categoriaNombre}</span>
+        </td>
+        <td class="tabla-celda">${fechaFormateada}</td>
+        <td class="tabla-celda tabla-celda--horario">${horario}</td>
+        <td class="tabla-celda tabla-celda--estado">${badgeAsistencia}</td>
+      `;
+
+      return fila;
+    }
+
+    // ----------------------------------------------------------------
+    // Actualizar métricas del historial
+    // ----------------------------------------------------------------
+    function actualizarMetricasHistorial(asistidos, noAsistidos) {
+      const total = asistidos + noAsistidos;
+      const porcentaje = total > 0 ? Math.round((asistidos / total) * 100) : 0;
+
+      document.getElementById('total-asistidos').textContent = asistidos;
+      document.getElementById('total-no-asistidos').textContent = noAsistidos;
+      document.getElementById('porcentaje-asistencia').textContent = `${porcentaje}%`;
+    }
+
+    // ----------------------------------------------------------------
+    // SISTEMA DE PESTAÑAS (Tabs)
+    // ----------------------------------------------------------------
+    function inicializarTabs() {
+      const botonesTab = document.querySelectorAll('.sidebar__nav-item[data-tab]');
+      const paneles = document.querySelectorAll('.tab-panel[data-panel]');
+
+      botonesTab.forEach(boton => {
+        boton.addEventListener('click', function () {
+          const tabObjetivo = this.getAttribute('data-tab');
+
+          // Desactivar todos los botones y paneles
+          botonesTab.forEach(b => {
+            b.classList.remove('sidebar__nav-item--activo');
+            b.setAttribute('aria-selected', 'false');
+          });
+          paneles.forEach(p => p.classList.add('oculto'));
+
+          // Activar el tab seleccionado
+          this.classList.add('sidebar__nav-item--activo');
+          this.setAttribute('aria-selected', 'true');
+
+          const panelObjetivo = document.getElementById(`panel-${tabObjetivo}`);
+          if (panelObjetivo) {
+            panelObjetivo.classList.remove('oculto');
+            panelObjetivo.classList.add('tab-panel--activo');
+          }
+        });
+      });
+    }
+
+    // ----------------------------------------------------------------
+    // MODAL: Cancelar inscripción
+    // ----------------------------------------------------------------
+    function inicializarModalCancelacion() {
+      const overlay = document.getElementById('modal-cancelar-overlay');
+      const btnNo = document.getElementById('btn-cancelar-no');
+      const btnConfirmar = document.getElementById('btn-cancelar-confirmar');
+
+      // Delegación de eventos en la grilla de inscripciones
+      document.getElementById('grilla-inscripciones').addEventListener('click', function (e) {
+        const boton = e.target.closest('.btn-cancelar-inscripcion');
+        if (!boton || boton.disabled) return;
+
+        const eventId = boton.getAttribute('data-event-id');
+        const eventTitulo = boton.getAttribute('data-event-titulo');
+
+        eventoPendienteCancelacion = eventId;
+
+        document.getElementById('modal-cancelar-evento-nombre').textContent = eventTitulo;
+        overlay.classList.remove('oculto');
+        overlay.setAttribute('aria-hidden', 'false');
+        btnNo.focus();
+      });
+
+      btnNo.addEventListener('click', cerrarModalCancelacion);
+
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) cerrarModalCancelacion();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !overlay.classList.contains('oculto')) {
+          cerrarModalCancelacion();
+        }
+      });
+
+      btnConfirmar.addEventListener('click', async function () {
+        if (!eventoPendienteCancelacion) return;
+
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Cancelando...';
+
+        try {
+          await cancelarInscripcion(usuarioActual.id, eventoPendienteCancelacion);
+          cerrarModalCancelacion();
+          await cargarInscripciones();
+        } catch (error) {
+          console.error('[DashboardAlumno] Error cancelando inscripción:', error);
+          cerrarModalCancelacion();
+          mostrarErrorGeneral('No se pudo cancelar la inscripción. Intenta nuevamente.');
+        } finally {
+          btnConfirmar.disabled = false;
+          btnConfirmar.textContent = 'Sí, Cancelar';
+          eventoPendienteCancelacion = null;
+        }
+      });
+    }
+
+    function cerrarModalCancelacion() {
+      const overlay = document.getElementById('modal-cancelar-overlay');
+      overlay.classList.add('oculto');
+      overlay.setAttribute('aria-hidden', 'true');
+      eventoPendienteCancelacion = null;
+    }
+
+    // ----------------------------------------------------------------
+    // HELPERS
+    // ----------------------------------------------------------------
+    function generarBadgeEstado(estado) {
+      const mapaClases = {
+        [CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO]: 'badge--programado',
+        [CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO]: 'badge--en-curso',
+        [CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO]: 'badge--finalizado'
+      };
+      const mapaEtiquetas = {
+        [CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO]: 'Programado',
+        [CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO]: 'En curso',
+        [CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO]: 'Finalizado'
+      };
+      const clase = mapaClases[estado] || 'badge--programado';
+      const etiqueta = mapaEtiquetas[estado] || estado;
+      return `<span class="badge ${clase}">${etiqueta}</span>`;
+    }
+
+    function formatearFecha(fechaISO) {
+      if (!fechaISO) return 'Fecha por confirmar';
+      try {
+        const fecha = new Date(fechaISO + 'T00:00:00');
+        return fecha.toLocaleDateString('es-PE', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } catch {
+        return fechaISO;
+      }
+    }
+
+    function escapeHtml(texto) {
+      const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(texto || '').replace(/[&<>"']/g, m => mapa[m]);
+    }
+
+    function mostrarErrorGeneral(mensaje) {
+      // Fallback a alert nativo si el sistema de alertas no está disponible
+      try {
+        import('./js/utils/alerts.js').then(({ mostrarAlerta }) => {
+          mostrarAlerta({ tipo: 'error', mensaje });
+        });
+      } catch {
+        console.error(mensaje);
+      }
+    }
+
+    // ----------------------------------------------------------------
+    // PUNTO DE ENTRADA
+    // ----------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', function () {
+      inicializarTabs();
+      inicializarModalCancelacion();
+      inicializar();
+    });
+  </script>
+
+  <!-- ui-global.js se carga como módulo independiente para el Navbar -->
+  <script type="module" src="js/ui-global.js"></script>
+
+</body>
+</html>

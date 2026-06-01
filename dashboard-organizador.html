@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Organizador — FISI Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboards.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVBAR COMÚN — controlado dinámicamente por ui-global.js
+  ============================================================ -->
+  <header class="navbar" id="navbar-principal">
+    <div class="navbar__contenedor">
+      <a href="index.html" class="navbar__marca">
+        <span class="navbar__marca-sigla">FISI</span>
+        <span class="navbar__marca-nombre">Events</span>
+      </a>
+      <nav class="navbar__nav" id="nav-links">
+        <a href="index.html" class="navbar__enlace">Catálogo</a>
+        <div id="navbar-auth-container">
+          <a href="login.html" class="navbar__enlace navbar__enlace--cta">Iniciar Sesión</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL DEL DASHBOARD ORGANIZADOR
+  ============================================================ -->
+  <main class="dashboard-layout" id="dashboard-organizador-main">
+
+    <!-- Barra lateral de navegación del panel -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar__perfil">
+        <div class="sidebar__avatar sidebar__avatar--organizador" id="sidebar-avatar">
+          <span id="sidebar-avatar-iniciales">--</span>
+        </div>
+        <div class="sidebar__info">
+          <p class="sidebar__nombre" id="sidebar-nombre-usuario">Cargando...</p>
+          <p class="sidebar__rol sidebar__rol--organizador" id="sidebar-tipo-organizador">Organizador</p>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button
+          class="sidebar__nav-item sidebar__nav-item--activo"
+          data-tab="crear-evento"
+          id="tab-btn-crear"
+          aria-selected="true"
+          role="tab"
+        >
+          <svg class="sidebar__nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          Crear Evento
+        </button>
+        <button
+          class="sidebar__nav-item"
+          data-tab="monitoreo"
+          id="tab-btn-monitoreo"
+          aria-selected="false"
+          role="tab"
+        >
+          <svg class="sidebar__nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          Monitoreo en Vivo
+        </button>
+        <button
+          class="sidebar__nav-item"
+          data-tab="mis-eventos"
+          id="tab-btn-mis-eventos"
+          aria-selected="false"
+          role="tab"
+        >
+          <svg class="sidebar__nav-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Mis Eventos
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <a href="index.html" class="sidebar__enlace-volver">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Volver al Catálogo
+        </a>
+      </div>
+    </aside>
+
+    <!-- Área principal de contenido con pestañas -->
+    <section class="dashboard-contenido" role="tabpanel">
+
+      <!-- ======================================================
+           PESTAÑA 1: CREAR EVENTO
+      ====================================================== -->
+      <div class="tab-panel tab-panel--activo" id="panel-crear-evento" data-panel="crear-evento">
+        <div class="dashboard-encabezado">
+          <div>
+            <h1 class="dashboard-titulo">Crear Nuevo Evento</h1>
+            <p class="dashboard-subtitulo">Completa todos los campos obligatorios para publicar tu actividad</p>
+          </div>
+        </div>
+
+        <!-- Notificaciones del formulario -->
+        <div class="form-notificacion oculto" id="form-notificacion" role="alert" aria-live="polite"></div>
+
+        <!-- Formulario de creación de eventos -->
+        <div class="form-card">
+          <div id="formulario-crear-evento">
+
+            <!-- Sección: Información General -->
+            <fieldset class="form-fieldset">
+              <legend class="form-legend">Información General</legend>
+
+              <div class="form-grupo">
+                <label class="form-label form-label--requerido" for="campo-titulo">
+                  Título del Evento
+                </label>
+                <input
+                  type="text"
+                  id="campo-titulo"
+                  name="titulo"
+                  class="form-input"
+                  placeholder="Ej: Seminario de Inteligencia Artificial 2025"
+                  maxlength="200"
+                  required
+                  autocomplete="off"
+                />
+                <span class="form-ayuda">Máximo 200 caracteres. Solo texto alfanumérico.</span>
+                <span class="form-error oculto" id="error-titulo"></span>
+              </div>
+
+              <div class="form-grupo">
+                <label class="form-label form-label--requerido" for="campo-categoria">
+                  Categoría
+                </label>
+                <select id="campo-categoria" name="categoria" class="form-select" required>
+                  <option value="" disabled selected>— Selecciona una categoría —</option>
+                  <option value="charla">Charla</option>
+                  <option value="taller">Taller</option>
+                  <option value="seminario">Seminario</option>
+                  <option value="congreso">Congreso</option>
+                </select>
+                <span class="form-error oculto" id="error-categoria"></span>
+              </div>
+            </fieldset>
+
+            <!-- Sección: Fechas y Horarios -->
+            <fieldset class="form-fieldset">
+              <legend class="form-legend">Fechas y Horarios</legend>
+
+              <div class="form-fila-doble">
+                <div class="form-grupo">
+                  <label class="form-label form-label--requerido" for="campo-fecha-inicio">
+                    Fecha del Evento
+                  </label>
+                  <input
+                    type="date"
+                    id="campo-fecha-inicio"
+                    name="fecha_inicio"
+                    class="form-input"
+                    required
+                  />
+                  <span class="form-error oculto" id="error-fecha-inicio"></span>
+                </div>
+
+                <div class="form-grupo">
+                  <label class="form-label form-label--requerido" for="campo-limite-inscripcion">
+                    Límite de Inscripción
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="campo-limite-inscripcion"
+                    name="limite_inscripcion"
+                    class="form-input"
+                    required
+                  />
+                  <span class="form-ayuda">Debe ser anterior a la fecha del evento.</span>
+                  <span class="form-error oculto" id="error-limite"></span>
+                </div>
+              </div>
+
+              <div class="form-fila-doble">
+                <div class="form-grupo">
+                  <label class="form-label form-label--requerido" for="campo-hora-inicio">
+                    Hora de Inicio
+                  </label>
+                  <input
+                    type="time"
+                    id="campo-hora-inicio"
+                    name="hora_inicio"
+                    class="form-input"
+                    required
+                  />
+                  <span class="form-error oculto" id="error-hora-inicio"></span>
+                </div>
+
+                <div class="form-grupo">
+                  <label class="form-label" for="campo-hora-fin">
+                    Hora de Fin
+                    <span class="form-label-opcional">(opcional)</span>
+                  </label>
+                  <input
+                    type="time"
+                    id="campo-hora-fin"
+                    name="hora_fin"
+                    class="form-input"
+                  />
+                  <span class="form-ayuda">Recomendado para detectar cruces de horario.</span>
+                  <span class="form-error oculto" id="error-hora-fin"></span>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Sección: Capacidad -->
+            <fieldset class="form-fieldset">
+              <legend class="form-legend">Capacidad de Asistentes</legend>
+
+              <!-- Checkbox: Vacantes Ilimitadas -->
+              <div class="form-grupo form-grupo--checkbox">
+                <label class="form-checkbox-label" for="checkbox-ilimitado">
+                  <input
+                    type="checkbox"
+                    id="checkbox-ilimitado"
+                    name="vacantes_ilimitadas"
+                    class="form-checkbox"
+                  />
+                  <span class="form-checkbox-custom"></span>
+                  <span class="form-checkbox-texto">
+                    Vacantes ilimitadas
+                    <small>Al activar esta opción, no se establecerá un límite de inscripciones.</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="form-grupo" id="grupo-capacidad-max">
+                <label class="form-label form-label--requerido" for="campo-capacidad-max" id="label-capacidad">
+                  Capacidad Máxima (personas)
+                </label>
+                <input
+                  type="number"
+                  id="campo-capacidad-max"
+                  name="capacidad_max"
+                  class="form-input"
+                  placeholder="Ej: 150"
+                  min="1"
+                  step="1"
+                  required
+                />
+                <span class="form-ayuda">Debe ser un número entero mayor a 0.</span>
+                <span class="form-error oculto" id="error-capacidad"></span>
+              </div>
+            </fieldset>
+
+            <!-- Botón de envío -->
+            <div class="form-footer">
+              <button type="button" class="btn btn--outline btn--lg" id="btn-limpiar-formulario">
+                Limpiar Campos
+              </button>
+              <button type="button" class="btn btn--primario btn--lg" id="btn-crear-evento">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Publicar Evento
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PESTAÑA 2: MONITOREO EN TIEMPO REAL
+      ====================================================== -->
+      <div class="tab-panel oculto" id="panel-monitoreo" data-panel="monitoreo">
+        <div class="dashboard-encabezado">
+          <div>
+            <h1 class="dashboard-titulo">Monitoreo en Tiempo Real</h1>
+            <p class="dashboard-subtitulo">Gestiona la asistencia de tus eventos activos</p>
+          </div>
+        </div>
+
+        <!-- Selector de evento a monitorear -->
+        <div class="selector-evento-card">
+          <label class="form-label form-label--requerido" for="selector-evento-monitoreo">
+            Selecciona un evento para monitorear
+          </label>
+          <div class="selector-evento-fila">
+            <select id="selector-evento-monitoreo" class="form-select form-select--grande">
+              <option value="" disabled selected>— Elige un evento de tu lista —</option>
+            </select>
+            <button class="btn btn--secundario" id="btn-refrescar-lista" title="Actualizar lista de eventos">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Estado de carga del monitoreo -->
+        <div class="estado-carga oculto" id="carga-monitoreo">
+          <div class="spinner"></div>
+          <p>Cargando lista de asistentes...</p>
+        </div>
+
+        <!-- Placeholder inicial -->
+        <div class="estado-vacio" id="placeholder-monitoreo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <h3>Selecciona un evento para comenzar</h3>
+          <p>Elige uno de tus eventos del desplegable de arriba para ver la lista de inscritos y gestionar la asistencia.</p>
+        </div>
+
+        <!-- Panel de asistencia activo -->
+        <div class="panel-asistencia oculto" id="panel-asistencia-activo">
+
+          <!-- Cabecera del evento seleccionado -->
+          <div class="evento-monitor-header">
+            <div class="evento-monitor-info">
+              <h2 class="evento-monitor-titulo" id="monitor-evento-titulo">—</h2>
+              <div class="evento-monitor-meta">
+                <span id="monitor-evento-fecha">—</span>
+                <span class="separador">•</span>
+                <span id="monitor-evento-horario">—</span>
+                <span class="separador">•</span>
+                <span id="monitor-evento-estado-badge"></span>
+              </div>
+            </div>
+            <div class="evento-monitor-metricas">
+              <div class="metrica-card metrica-card--sm">
+                <span class="metrica-card__numero" id="monitor-total-inscritos">0</span>
+                <span class="metrica-card__etiqueta">Inscritos</span>
+              </div>
+              <div class="metrica-card metrica-card--sm metrica-card--verde">
+                <span class="metrica-card__numero" id="monitor-total-presentes">0</span>
+                <span class="metrica-card__etiqueta">Presentes</span>
+              </div>
+              <div class="metrica-card metrica-card--sm">
+                <span class="metrica-card__numero" id="monitor-porcentaje">0%</span>
+                <span class="metrica-card__etiqueta">Asistencia</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aviso de evento finalizado -->
+          <div class="aviso-finalizado oculto" id="aviso-evento-finalizado">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>Este evento ha <strong>finalizado</strong>. Los registros de asistencia están congelados y no pueden modificarse.</span>
+          </div>
+
+          <!-- Aviso de evento programado -->
+          <div class="aviso-programado oculto" id="aviso-evento-programado">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Este evento aún está <strong>programado</strong>. La toma de asistencia solo se habilita cuando el estado sea <em>"En curso"</em>.</span>
+          </div>
+
+          <!-- Botón de descarga de reporte -->
+          <div class="panel-acciones-reporte">
+            <div class="panel-acciones-reporte__info">
+              <strong>Exportar Reporte CSV</strong>
+              <span>Descarga localmente la lista de inscritos con su estado de asistencia.</span>
+            </div>
+            <button class="btn btn--exportar" id="btn-descargar-reporte" aria-label="Descargar reporte CSV del evento">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Exportar Reporte
+            </button>
+          </div>
+
+          <!-- Tabla de asistentes con switches -->
+          <div class="tabla-wrapper" id="wrapper-asistentes">
+            <table class="tabla-datos tabla-asistencia" id="tabla-asistentes" aria-label="Lista de asistentes al evento">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Nombre Completo</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Carrera</th>
+                  <th scope="col">F. Inscripción</th>
+                  <th scope="col" class="col-asistencia">Check-in</th>
+                </tr>
+              </thead>
+              <tbody id="asistentes-tbody">
+                <!-- Filas inyectadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Estado vacío: sin inscritos -->
+          <div class="estado-vacio oculto" id="vacio-asistentes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <h3>Sin inscritos aún</h3>
+            <p>Nadie se ha inscrito en este evento todavía.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PESTAÑA 3: MIS EVENTOS
+      ====================================================== -->
+      <div class="tab-panel oculto" id="panel-mis-eventos" data-panel="mis-eventos">
+        <div class="dashboard-encabezado">
+          <div>
+            <h1 class="dashboard-titulo">Mis Eventos</h1>
+            <p class="dashboard-subtitulo">Todos los eventos que has creado y su estado actual</p>
+          </div>
+          <div class="dashboard-metricas" id="metricas-mis-eventos">
+            <div class="metrica-card">
+              <span class="metrica-card__numero" id="total-eventos-creados">0</span>
+              <span class="metrica-card__etiqueta">Eventos totales</span>
+            </div>
+            <div class="metrica-card">
+              <span class="metrica-card__numero" id="total-eventos-activos">0</span>
+              <span class="metrica-card__etiqueta">En curso</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="estado-carga oculto" id="carga-mis-eventos">
+          <div class="spinner"></div>
+          <p>Cargando tus eventos...</p>
+        </div>
+
+        <div class="estado-vacio oculto" id="vacio-mis-eventos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h3>Aún no has creado eventos</h3>
+          <p>Ve a la pestaña "Crear Evento" para publicar tu primera actividad.</p>
+          <button class="btn btn--primario" onclick="document.getElementById('tab-btn-crear').click()">
+            Crear mi primer evento
+          </button>
+        </div>
+
+        <div class="tabla-wrapper oculto" id="wrapper-mis-eventos">
+          <table class="tabla-datos" id="tabla-mis-eventos" aria-label="Lista de mis eventos">
+            <thead>
+              <tr>
+                <th scope="col">Título</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Capacidad</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="mis-eventos-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ============================================================
+       SCRIPTS — Orden de carga crítico
+  ============================================================ -->
+  <script type="module">
+    import { CONFIG_SISTEMA, STORAGE_KEYS } from './js/config.js';
+    import { getUsuarioLogueado } from './js/ui-global.js';
+    import { crearEventoDB, obtenerEventosPorOrganizador, actualizarEstadoEvento } from './js/modules/events.js';
+    import { obtenerInscritosEvento, marcarAsistencia } from './js/modules/attendance.js';
+    import { descargarReporteEvento } from './js/utils/export-helpers.js';
+
+    // ----------------------------------------------------------------
+    // ESTADO LOCAL DEL MÓDULO
+    // ----------------------------------------------------------------
+    let usuarioActual = null;
+    let eventoMonitoreado = null;
+    let inscritosCache = [];
+
+    // ----------------------------------------------------------------
+    // INICIALIZACIÓN
+    // ----------------------------------------------------------------
+    async function inicializar() {
+      try {
+        usuarioActual = getUsuarioLogueado();
+
+        if (!usuarioActual) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        if (usuarioActual.role !== CONFIG_SISTEMA.ROLES.ORGANIZADOR) {
+          window.location.href = 'dashboard-alumno.html';
+          return;
+        }
+
+        pintarPerfilSidebar(usuarioActual);
+        await cargarMisEventos();
+
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error en inicialización:', error);
+        mostrarNotificacion('error', 'Error al cargar el panel. Recarga la página.');
+      }
+    }
+
+    // ----------------------------------------------------------------
+    // SIDEBAR: Pintar nombre del organizador
+    // ----------------------------------------------------------------
+    function pintarPerfilSidebar(usuario) {
+      const elNombre = document.getElementById('sidebar-nombre-usuario');
+      const elIniciales = document.getElementById('sidebar-avatar-iniciales');
+      const elTipo = document.getElementById('sidebar-tipo-organizador');
+
+      const nombre = usuario.organizerType === CONFIG_SISTEMA.TIPO_ORGANIZADOR.GRUPO && usuario.groupName
+        ? usuario.groupName
+        : `${usuario.firstName} ${usuario.lastName}`;
+
+      elNombre.textContent = nombre;
+
+      const iniciales = usuario.organizerType === CONFIG_SISTEMA.TIPO_ORGANIZADOR.GRUPO
+        ? (usuario.groupName || 'GR').substring(0, 2).toUpperCase()
+        : `${(usuario.firstName || '?')[0]}${(usuario.lastName || '?')[0]}`.toUpperCase();
+
+      elIniciales.textContent = iniciales;
+
+      elTipo.textContent = usuario.organizerType === CONFIG_SISTEMA.TIPO_ORGANIZADOR.GRUPO
+        ? 'Grupo / Círculo de Estudios'
+        : 'Organizador Individual';
+    }
+
+    // ----------------------------------------------------------------
+    // SISTEMA DE PESTAÑAS
+    // ----------------------------------------------------------------
+    function inicializarTabs() {
+      const botonesTab = document.querySelectorAll('.sidebar__nav-item[data-tab]');
+      const paneles = document.querySelectorAll('.tab-panel[data-panel]');
+
+      botonesTab.forEach(boton => {
+        boton.addEventListener('click', function () {
+          const tabObjetivo = this.getAttribute('data-tab');
+
+          botonesTab.forEach(b => {
+            b.classList.remove('sidebar__nav-item--activo');
+            b.setAttribute('aria-selected', 'false');
+          });
+          paneles.forEach(p => {
+            p.classList.add('oculto');
+            p.classList.remove('tab-panel--activo');
+          });
+
+          this.classList.add('sidebar__nav-item--activo');
+          this.setAttribute('aria-selected', 'true');
+
+          const panelObjetivo = document.getElementById(`panel-${tabObjetivo}`);
+          if (panelObjetivo) {
+            panelObjetivo.classList.remove('oculto');
+            panelObjetivo.classList.add('tab-panel--activo');
+          }
+        });
+      });
+    }
+
+    // ----------------------------------------------------------------
+    // FORMULARIO DE CREACIÓN DE EVENTOS
+    // ----------------------------------------------------------------
+    function inicializarFormulario() {
+      const checkboxIlimitado = document.getElementById('checkbox-ilimitado');
+      const inputCapacidad = document.getElementById('campo-capacidad-max');
+      const labelCapacidad = document.getElementById('label-capacidad');
+      const grupoCapacidad = document.getElementById('grupo-capacidad-max');
+
+      // Lógica del checkbox de vacantes ilimitadas
+      checkboxIlimitado.addEventListener('change', function () {
+        if (this.checked) {
+          // Limpiar, deshabilitar y quitar requerido al campo de capacidad
+          inputCapacidad.value = '';
+          inputCapacidad.disabled = true;
+          inputCapacidad.removeAttribute('required');
+          inputCapacidad.setAttribute('aria-disabled', 'true');
+          grupoCapacidad.classList.add('form-grupo--deshabilitado');
+
+          // Remover la indicación de campo requerido del label
+          labelCapacidad.classList.remove('form-label--requerido');
+
+          // Ocultar errores previos
+          const errorCapacidad = document.getElementById('error-capacidad');
+          errorCapacidad.classList.add('oculto');
+          errorCapacidad.textContent = '';
+          inputCapacidad.classList.remove('form-input--error');
+        } else {
+          // Rehabilitar el campo
+          inputCapacidad.disabled = false;
+          inputCapacidad.setAttribute('required', 'required');
+          inputCapacidad.removeAttribute('aria-disabled');
+          grupoCapacidad.classList.remove('form-grupo--deshabilitado');
+          labelCapacidad.classList.add('form-label--requerido');
+        }
+      });
+
+      // Botón limpiar
+      document.getElementById('btn-limpiar-formulario').addEventListener('click', limpiarFormulario);
+
+      // Botón publicar
+      document.getElementById('btn-crear-evento').addEventListener('click', manejarCrearEvento);
+
+      // Establecer fecha mínima de hoy
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('campo-fecha-inicio').min = hoy;
+    }
+
+    function limpiarFormulario() {
+      const campos = ['campo-titulo', 'campo-categoria', 'campo-fecha-inicio',
+        'campo-limite-inscripcion', 'campo-hora-inicio', 'campo-hora-fin', 'campo-capacidad-max'];
+
+      campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      // Resetear checkbox
+      const checkbox = document.getElementById('checkbox-ilimitado');
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('change'));
+
+      // Limpiar errores
+      const errores = document.querySelectorAll('.form-error');
+      errores.forEach(e => {
+        e.textContent = '';
+        e.classList.add('oculto');
+      });
+
+      const inputs = document.querySelectorAll('.form-input--error');
+      inputs.forEach(i => i.classList.remove('form-input--error'));
+
+      const notif = document.getElementById('form-notificacion');
+      notif.classList.add('oculto');
+      notif.textContent = '';
+    }
+
+    async function manejarCrearEvento() {
+      limpiarErroresFormulario();
+
+      const datos = obtenerDatosFormulario();
+      const errores = validarFormulario(datos);
+
+      if (errores.length > 0) {
+        errores.forEach(({ campo, mensaje }) => mostrarErrorCampo(campo, mensaje));
+        return;
+      }
+
+      const btnCrear = document.getElementById('btn-crear-evento');
+      btnCrear.disabled = true;
+      btnCrear.textContent = 'Publicando...';
+
+      try {
+        // Construir payload alineado con el DDL
+        const payload = {
+          title: datos.titulo,
+          category: datos.categoria,
+          startDate: datos.fechaInicio,
+          startTime: datos.horaInicio,
+          endTime: datos.horaFin || null,
+          deadline: datos.limiteInscripcion,
+          maxCapacity: datos.capacidadMax,   // null si es ilimitado
+          createdBy: usuarioActual.id
+        };
+
+        await crearEventoDB(payload);
+
+        mostrarNotificacion('exito', `El evento "${datos.titulo}" fue publicado exitosamente.`);
+        limpiarFormulario();
+
+        // Recargar la lista de eventos y el selector del monitor
+        await cargarMisEventos();
+        await actualizarSelectorMonitoreo();
+
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error creando evento:', error);
+        mostrarNotificacion('error', 'No se pudo publicar el evento. Verifica tu conexión e inténtalo de nuevo.');
+      } finally {
+        btnCrear.disabled = false;
+        btnCrear.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          Publicar Evento
+        `;
+      }
+    }
+
+    function obtenerDatosFormulario() {
+      const checkboxIlimitado = document.getElementById('checkbox-ilimitado').checked;
+      const valorCapacidad = document.getElementById('campo-capacidad-max').value.trim();
+
+      return {
+        titulo: document.getElementById('campo-titulo').value.trim(),
+        categoria: document.getElementById('campo-categoria').value,
+        fechaInicio: document.getElementById('campo-fecha-inicio').value,
+        limiteInscripcion: document.getElementById('campo-limite-inscripcion').value,
+        horaInicio: document.getElementById('campo-hora-inicio').value,
+        horaFin: document.getElementById('campo-hora-fin').value,
+        capacidadMax: checkboxIlimitado ? null : (valorCapacidad !== '' ? parseInt(valorCapacidad, 10) : null),
+        esIlimitado: checkboxIlimitado
+      };
+    }
+
+    function validarFormulario(datos) {
+      const errores = [];
+
+      if (!datos.titulo || datos.titulo.length < 3) {
+        errores.push({ campo: 'titulo', mensaje: 'El título es obligatorio y debe tener al menos 3 caracteres.' });
+      }
+
+      if (!datos.categoria) {
+        errores.push({ campo: 'categoria', mensaje: 'Debes seleccionar una categoría.' });
+      }
+
+      if (!datos.fechaInicio) {
+        errores.push({ campo: 'fecha-inicio', mensaje: 'La fecha del evento es obligatoria.' });
+      }
+
+      if (!datos.limiteInscripcion) {
+        errores.push({ campo: 'limite', mensaje: 'El límite de inscripción es obligatorio.' });
+      } else if (datos.fechaInicio) {
+        const fechaEvento = new Date(datos.fechaInicio + 'T00:00:00');
+        const fechaLimite = new Date(datos.limiteInscripcion);
+        if (fechaLimite >= fechaEvento) {
+          errores.push({ campo: 'limite', mensaje: 'El límite de inscripción debe ser anterior al inicio del evento.' });
+        }
+      }
+
+      if (!datos.horaInicio) {
+        errores.push({ campo: 'hora-inicio', mensaje: 'La hora de inicio es obligatoria.' });
+      }
+
+      if (datos.horaFin && datos.horaInicio && datos.horaFin <= datos.horaInicio) {
+        errores.push({ campo: 'hora-fin', mensaje: 'La hora de fin debe ser posterior a la de inicio.' });
+      }
+
+      if (!datos.esIlimitado) {
+        if (datos.capacidadMax === null || isNaN(datos.capacidadMax)) {
+          errores.push({ campo: 'capacidad', mensaje: 'Ingresa la capacidad máxima o marca "Vacantes ilimitadas".' });
+        } else if (datos.capacidadMax < 1) {
+          errores.push({ campo: 'capacidad', mensaje: 'La capacidad debe ser un número entero mayor a 0.' });
+        }
+      }
+
+      return errores;
+    }
+
+    function mostrarErrorCampo(campo, mensaje) {
+      const elError = document.getElementById(`error-${campo}`);
+      const elInput = document.getElementById(`campo-${campo}`);
+
+      if (elError) {
+        elError.textContent = mensaje;
+        elError.classList.remove('oculto');
+      }
+      if (elInput) {
+        elInput.classList.add('form-input--error');
+      }
+    }
+
+    function limpiarErroresFormulario() {
+      document.querySelectorAll('.form-error').forEach(e => {
+        e.textContent = '';
+        e.classList.add('oculto');
+      });
+      document.querySelectorAll('.form-input--error').forEach(i => i.classList.remove('form-input--error'));
+    }
+
+    // ----------------------------------------------------------------
+    // MIS EVENTOS: Cargar tabla
+    // ----------------------------------------------------------------
+    async function cargarMisEventos() {
+      const elCarga = document.getElementById('carga-mis-eventos');
+      const elVacio = document.getElementById('vacio-mis-eventos');
+      const elWrapper = document.getElementById('wrapper-mis-eventos');
+      const elTbody = document.getElementById('mis-eventos-tbody');
+
+      elCarga.classList.remove('oculto');
+      elVacio.classList.add('oculto');
+      elWrapper.classList.add('oculto');
+
+      try {
+        const eventos = await obtenerEventosPorOrganizador(usuarioActual.id);
+        elCarga.classList.add('oculto');
+
+        document.getElementById('total-eventos-creados').textContent = eventos.length;
+        const enCurso = eventos.filter(e => e.estado === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO).length;
+        document.getElementById('total-eventos-activos').textContent = enCurso;
+
+        if (eventos.length === 0) {
+          elVacio.classList.remove('oculto');
+          return;
+        }
+
+        elWrapper.classList.remove('oculto');
+        elTbody.innerHTML = '';
+
+        eventos.forEach((evento, index) => {
+          const fila = crearFilaMiEvento(evento, index);
+          elTbody.appendChild(fila);
+        });
+
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error cargando mis eventos:', error);
+        elCarga.classList.add('oculto');
+        elVacio.classList.remove('oculto');
+      }
+    }
+
+    function crearFilaMiEvento(evento, index) {
+      const fila = document.createElement('tr');
+      fila.className = index % 2 === 0 ? 'fila-par' : 'fila-impar';
+
+      const categoriaNombre = evento.category
+        ? evento.category.charAt(0).toUpperCase() + evento.category.slice(1)
+        : '—';
+      const capacidadTexto = evento.maxCapacity !== null ? evento.maxCapacity : '∞ Ilimitado';
+      const badgeEstado = generarBadgeEstado(evento.estado);
+
+      fila.innerHTML = `
+        <td class="tabla-celda tabla-celda--titulo">
+          <a href="evento-detalle.html?id=${evento.eventId}" class="tabla-enlace-evento">
+            ${escapeHtml(evento.title)}
+          </a>
+        </td>
+        <td class="tabla-celda">
+          <span class="tabla-categoria">${categoriaNombre}</span>
+        </td>
+        <td class="tabla-celda">${formatearFecha(evento.startDate)}</td>
+        <td class="tabla-celda">${capacidadTexto}</td>
+        <td class="tabla-celda">${badgeEstado}</td>
+        <td class="tabla-celda tabla-celda--acciones">
+          <button
+            class="btn btn--sm btn--outline btn-cambiar-estado"
+            data-event-id="${evento.eventId}"
+            data-estado-actual="${evento.estado}"
+            ${evento.estado === CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO ? 'disabled' : ''}
+            title="Avanzar estado del evento"
+          >
+            ${generarTextoBotonEstado(evento.estado)}
+          </button>
+        </td>
+      `;
+
+      return fila;
+    }
+
+    function generarTextoBotonEstado(estado) {
+      if (estado === CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO) return 'Iniciar evento';
+      if (estado === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO) return 'Finalizar';
+      return 'Finalizado';
+    }
+
+    // Delegación de eventos para cambiar estado
+    document.getElementById('mis-eventos-tbody').addEventListener('click', async function (e) {
+      const boton = e.target.closest('.btn-cambiar-estado');
+      if (!boton || boton.disabled) return;
+
+      const eventId = boton.getAttribute('data-event-id');
+      const estadoActual = boton.getAttribute('data-estado-actual');
+
+      const mapaTransicion = {
+        [CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO]: CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO,
+        [CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO]: CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO
+      };
+
+      const nuevoEstado = mapaTransicion[estadoActual];
+      if (!nuevoEstado) return;
+
+      const confirmacion = confirm(
+        `¿Confirmas cambiar el estado del evento a "${nuevoEstado.replace('_', ' ')}"?\n` +
+        (nuevoEstado === CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO
+          ? 'Esta acción es irreversible. La asistencia quedará congelada.'
+          : '')
+      );
+
+      if (!confirmacion) return;
+
+      boton.disabled = true;
+      boton.textContent = 'Actualizando...';
+
+      try {
+        await actualizarEstadoEvento(eventId, nuevoEstado);
+        await cargarMisEventos();
+        await actualizarSelectorMonitoreo();
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error actualizando estado:', error);
+        mostrarNotificacion('error', 'No se pudo actualizar el estado del evento.');
+        boton.disabled = false;
+      }
+    });
+
+    // ----------------------------------------------------------------
+    // MONITOREO EN TIEMPO REAL
+    // ----------------------------------------------------------------
+    async function actualizarSelectorMonitoreo() {
+      try {
+        const eventos = await obtenerEventosPorOrganizador(usuarioActual.id);
+        const selector = document.getElementById('selector-evento-monitoreo');
+        const valorActual = selector.value;
+
+        selector.innerHTML = '<option value="" disabled>— Elige un evento de tu lista —</option>';
+
+        eventos.forEach(evento => {
+          const option = document.createElement('option');
+          option.value = evento.eventId;
+          option.textContent = `${evento.title} (${formatearFecha(evento.startDate)})`;
+          option.setAttribute('data-estado', evento.estado);
+          selector.appendChild(option);
+        });
+
+        // Restaurar selección previa si sigue existiendo
+        if (valorActual && selector.querySelector(`option[value="${valorActual}"]`)) {
+          selector.value = valorActual;
+        }
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error actualizando selector de monitoreo:', error);
+      }
+    }
+
+    function inicializarMonitoreo() {
+      const selector = document.getElementById('selector-evento-monitoreo');
+      const btnRefrescar = document.getElementById('btn-refrescar-lista');
+
+      selector.addEventListener('change', async function () {
+        const eventId = this.value;
+        if (!eventId) return;
+
+        const opcionSeleccionada = this.querySelector(`option[value="${eventId}"]`);
+        const estado = opcionSeleccionada ? opcionSeleccionada.getAttribute('data-estado') : null;
+
+        await cargarAsistentes(eventId, estado);
+      });
+
+      btnRefrescar.addEventListener('click', async function () {
+        await actualizarSelectorMonitoreo();
+        const eventId = selector.value;
+        if (eventId) {
+          const opcion = selector.querySelector(`option[value="${eventId}"]`);
+          const estado = opcion ? opcion.getAttribute('data-estado') : null;
+          await cargarAsistentes(eventId, estado);
+        }
+      });
+
+      document.getElementById('btn-descargar-reporte').addEventListener('click', function () {
+        if (!eventoMonitoreado) return;
+
+        try {
+          descargarReporteEvento(eventoMonitoreado, inscritosCache);
+        } catch (error) {
+          console.error('[DashboardOrganizador] Error descargando reporte:', error);
+          mostrarNotificacion('error', 'No se pudo generar el reporte CSV.');
+        }
+      });
+    }
+
+    async function cargarAsistentes(eventId, estadoEvento) {
+      const elCarga = document.getElementById('carga-monitoreo');
+      const elPlaceholder = document.getElementById('placeholder-monitoreo');
+      const elPanel = document.getElementById('panel-asistencia-activo');
+      const elVacio = document.getElementById('vacio-asistentes');
+      const elWrapper = document.getElementById('wrapper-asistentes');
+      const elTbody = document.getElementById('asistentes-tbody');
+
+      elCarga.classList.remove('oculto');
+      elPlaceholder.classList.add('oculto');
+      elPanel.classList.add('oculto');
+
+      try {
+        const inscritos = await obtenerInscritosEvento(eventId);
+        inscritosCache = inscritos;
+        eventoMonitoreado = eventId;
+
+        elCarga.classList.add('oculto');
+        elPanel.classList.remove('oculto');
+
+        // Actualizar cabecera del evento
+        const selector = document.getElementById('selector-evento-monitoreo');
+        const opcion = selector.querySelector(`option[value="${eventId}"]`);
+        if (opcion) {
+          document.getElementById('monitor-evento-titulo').textContent = opcion.textContent.split('(')[0].trim();
+        }
+
+        document.getElementById('monitor-evento-estado-badge').innerHTML = generarBadgeEstado(estadoEvento);
+
+        // Determinar si la toma de asistencia está disponible
+        const estaFinalizado = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO;
+        const estaProgramado = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO;
+        const estaEnCurso = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO;
+
+        const avisoFinalizado = document.getElementById('aviso-evento-finalizado');
+        const avisoProgramado = document.getElementById('aviso-evento-programado');
+
+        avisoFinalizado.classList.toggle('oculto', !estaFinalizado);
+        avisoProgramado.classList.toggle('oculto', !estaProgramado);
+
+        // Renderizar tabla
+        actualizarMetricasMonitoreo(inscritos);
+
+        if (inscritos.length === 0) {
+          elVacio.classList.remove('oculto');
+          elWrapper.classList.add('oculto');
+          return;
+        }
+
+        elVacio.classList.add('oculto');
+        elWrapper.classList.remove('oculto');
+        elTbody.innerHTML = '';
+
+        inscritos.forEach((inscrito, index) => {
+          const fila = crearFilaAsistente(inscrito, index, estadoEvento);
+          elTbody.appendChild(fila);
+        });
+
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error cargando asistentes:', error);
+        elCarga.classList.add('oculto');
+        elPlaceholder.classList.remove('oculto');
+        mostrarNotificacion('error', 'No se pudo cargar la lista de asistentes.');
+      }
+    }
+
+    function crearFilaAsistente(inscrito, index, estadoEvento) {
+      const fila = document.createElement('tr');
+      fila.className = index % 2 === 0 ? 'fila-par' : 'fila-impar';
+      fila.setAttribute('data-user-id', inscrito.userId);
+
+      const estaFinalizado = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO;
+      const estaProgramado = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO;
+      // El switch se deshabilita si el evento está finalizado o programado (no en curso)
+      const switchDeshabilitado = estaFinalizado || estaProgramado;
+
+      const asistioActual = inscrito.asistio === true;
+      const fechaInscripcion = inscrito.fechaInscripcion
+        ? new Date(inscrito.fechaInscripcion).toLocaleDateString('es-PE')
+        : '—';
+
+      fila.innerHTML = `
+        <td class="tabla-celda tabla-celda--numero">${index + 1}</td>
+        <td class="tabla-celda tabla-celda--nombre">
+          ${escapeHtml(inscrito.nombres)} ${escapeHtml(inscrito.apellidos)}
+        </td>
+        <td class="tabla-celda">${escapeHtml(inscrito.codigoEstudiante || '—')}</td>
+        <td class="tabla-celda">${escapeHtml(inscrito.carrera || '—')}</td>
+        <td class="tabla-celda">${fechaInscripcion}</td>
+        <td class="tabla-celda tabla-celda--switch">
+          <label class="toggle-switch ${switchDeshabilitado ? 'toggle-switch--disabled' : ''}"
+                 title="${switchDeshabilitado ? (estaFinalizado ? 'Evento finalizado — registro congelado' : 'El evento aún no ha comenzado') : 'Marcar asistencia'}">
+            <input
+              type="checkbox"
+              class="toggle-switch__input switch-asistencia"
+              data-user-id="${inscrito.userId}"
+              data-event-id="${eventoMonitoreado}"
+              ${asistioActual ? 'checked' : ''}
+              ${switchDeshabilitado ? 'disabled' : ''}
+              aria-label="Asistencia de ${escapeHtml(inscrito.nombres)} ${escapeHtml(inscrito.apellidos)}"
+            />
+            <span class="toggle-switch__slider"></span>
+          </label>
+        </td>
+      `;
+
+      return fila;
+    }
+
+    // Delegación de eventos para los switches de asistencia
+    document.getElementById('asistentes-tbody').addEventListener('change', async function (e) {
+      const switchEl = e.target.closest('.switch-asistencia');
+      if (!switchEl || switchEl.disabled) return;
+
+      const userId = switchEl.getAttribute('data-user-id');
+      const eventId = switchEl.getAttribute('data-event-id');
+      const nuevoValor = switchEl.checked;
+
+      // Feedback visual inmediato
+      const fila = switchEl.closest('tr');
+      fila.classList.add('fila--actualizando');
+
+      try {
+        await marcarAsistencia(userId, eventId, nuevoValor);
+
+        // Actualizar cache local
+        const inscrito = inscritosCache.find(i => i.userId === userId);
+        if (inscrito) inscrito.asistio = nuevoValor;
+
+        actualizarMetricasMonitoreo(inscritosCache);
+
+      } catch (error) {
+        console.error('[DashboardOrganizador] Error marcando asistencia:', error);
+        // Revertir el switch al estado anterior
+        switchEl.checked = !nuevoValor;
+        mostrarNotificacion('error', 'No se pudo registrar la asistencia. Inténtalo de nuevo.');
+      } finally {
+        fila.classList.remove('fila--actualizando');
+      }
+    });
+
+    function actualizarMetricasMonitoreo(inscritos) {
+      const total = inscritos.length;
+      const presentes = inscritos.filter(i => i.asistio === true).length;
+      const porcentaje = total > 0 ? Math.round((presentes / total) * 100) : 0;
+
+      document.getElementById('monitor-total-inscritos').textContent = total;
+      document.getElementById('monitor-total-presentes').textContent = presentes;
+      document.getElementById('monitor-porcentaje').textContent = `${porcentaje}%`;
+    }
+
+    // ----------------------------------------------------------------
+    // HELPERS
+    // ----------------------------------------------------------------
+    function generarBadgeEstado(estado) {
+      const mapaClases = {
+        [CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO]: 'badge--programado',
+        [CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO]: 'badge--en-curso',
+        [CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO]: 'badge--finalizado'
+      };
+      const mapaEtiquetas = {
+        [CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO]: 'Programado',
+        [CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO]: 'En curso',
+        [CONFIG_SISTEMA.STATUS_EVENTO.FINALIZADO]: 'Finalizado'
+      };
+      const clase = mapaClases[estado] || 'badge--programado';
+      const etiqueta = mapaEtiquetas[estado] || estado;
+      return `<span class="badge ${clase}">${etiqueta}</span>`;
+    }
+
+    function formatearFecha(fechaISO) {
+      if (!fechaISO) return '—';
+      try {
+        const fecha = new Date(fechaISO + 'T00:00:00');
+        return fecha.toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch {
+        return fechaISO;
+      }
+    }
+
+    function escapeHtml(texto) {
+      const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(texto || '').replace(/[&<>"']/g, m => mapa[m]);
+    }
+
+    function mostrarNotificacion(tipo, mensaje) {
+      const el = document.getElementById('form-notificacion');
+      if (!el) return;
+
+      el.className = `form-notificacion form-notificacion--${tipo}`;
+      el.textContent = mensaje;
+      el.classList.remove('oculto');
+
+      setTimeout(() => {
+        el.classList.add('oculto');
+      }, 5000);
+    }
+
+    // ----------------------------------------------------------------
+    // PUNTO DE ENTRADA
+    // ----------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', async function () {
+      inicializarTabs();
+      inicializarFormulario();
+      inicializarMonitoreo();
+      await inicializar();
+      await actualizarSelectorMonitoreo();
+    });
+  </script>
+
+  <script type="module" src="js/ui-global.js"></script>
+
+</body>
+</html>
