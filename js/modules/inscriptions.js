@@ -1,472 +1,298 @@
 /**
- * @file inscriptions.js
- * @description Módulo de gestión de inscripciones para FISI Events.
- *   Realiza validación de aforo disponible, detección de choque de horarios
- *   y operaciones CRUD contra la REST API de Supabase, con fallback a LocalStorage.
- * @module modules/inscriptions
+ * ============================================================
+ * js/modules/inscriptions.js
+ * FISI Events — Módulo de Inscripciones
+ * ============================================================
  */
 
 import { CONFIG_SISTEMA, STORAGE_KEYS, DB_VARS } from '../config.js';
 import {
-  mostrarAlertaFlotante,
-  verificarYConfirmarChoqueHorario,
+    mostrarAlertaFlotante,
+    verificarYConfirmarChoqueHorario,
 } from '../utils/alerts.js';
 
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 1 – CONSTANTES INTERNAS                                             *
- * ─────────────────────────────────────────────────────────────────────────── */
-
 const TABLA_INSCRIPCIONES = 'inscripciones';
-const TABLA_EVENTOS        = 'eventos';
+const TABLA_EVENTOS       = 'eventos';
 
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 2 – HELPERS DE RED                                                  *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Construye las cabeceras HTTP estándar para las peticiones a Supabase.
- * @returns {Headers}
- */
+/* ── Helpers de red ──────────────────────────────────────── */
 function _construirHeaders() {
-  return new Headers({
-    'Content-Type': 'application/json',
-    'apikey':        DB_VARS.KEY,
-    'Authorization': `Bearer ${DB_VARS.KEY}`,
-    'Prefer':        'return=representation',
-  });
+    return new Headers({
+        'Content-Type':  'application/json',
+        'apikey':        DB_VARS.KEY,
+        'Authorization': `Bearer ${DB_VARS.KEY}`,
+        'Prefer':        'return=representation',
+    });
 }
 
-/**
- * Determina si hay conectividad disponible para operar en modo red.
- * @returns {boolean}
- */
 function _hayConexion() {
-  return navigator.onLine;
+    return navigator.onLine;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 3 – OPERACIONES LOCALSTORAGE (FALLBACK OFFLINE)                     *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Lee la colección de inscripciones almacenada localmente.
- * @returns {Array<Object>}
- */
+/* ── Helpers localStorage ────────────────────────────────── */
 function _leerInscripcionesLocales() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.INSCRIPCIONES_LOCAL ?? 'fisi_inscripciones');
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+    try {
+        const raw = localStorage.getItem(STORAGE_KEYS.INSCRIPCIONES_LOCAL ?? 'fisi_inscripciones');
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
 }
 
-/**
- * Persiste la colección de inscripciones en LocalStorage.
- * @param {Array<Object>} inscripciones
- */
 function _guardarInscripcionesLocales(inscripciones) {
-  localStorage.setItem(
-    STORAGE_KEYS.INSCRIPCIONES_LOCAL ?? 'fisi_inscripciones',
-    JSON.stringify(inscripciones),
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 4 – ALGORITMO DE COLISIÓN TEMPORAL (LADO CLIENTE)                   *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Determina si dos eventos se intersectan temporalmente.
- *
- * Criterio matemático estricto: los eventos A y B colisionan si y solo si
- *   EventoA.hora_inicio < EventoB.hora_fin  AND  EventoB.hora_inicio < EventoA.hora_fin
- *
- * @param {string} fechaA   - Fecha del evento A en formato YYYY-MM-DD.
- * @param {string} inicioA  - Hora de inicio del evento A en formato HH:MM o HH:MM:SS.
- * @param {string} finA     - Hora de fin del evento A.
- * @param {string} fechaB   - Fecha del evento B.
- * @param {string} inicioB  - Hora de inicio del evento B.
- * @param {string} finB     - Hora de fin del evento B.
- * @returns {boolean} `true` si los eventos se intersectan.
- */
-function _eventosColisionan(fechaA, inicioA, finA, fechaB, inicioB, finB) {
-  // Solo aplicar si comparten la misma fecha de inicio
-  if (fechaA !== fechaB) return false;
-
-  // Convertir horas a minutos desde medianoche para comparación numérica
-  const toMinutos = (horaStr) => {
-    if (!horaStr) return null;
-    const partes = String(horaStr).split(':').map(Number);
-    return partes[0] * 60 + (partes[1] ?? 0);
-  };
-
-  const inicioAMin = toMinutos(inicioA);
-  const finAMin    = toMinutos(finA);
-  const inicioBMin = toMinutos(inicioB);
-  const finBMin    = toMinutos(finB);
-
-  // Si alguno no tiene hora de fin definida, no es posible determinar colisión
-  if (finAMin === null || finBMin === null) return false;
-
-  // Inecuación de intersección de intervalos
-  return inicioAMin < finBMin && inicioBMin < finAMin;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 5 – LECTURA DE INSCRIPCIONES DEL ALUMNO LOGUEADO                   *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Recupera todas las inscripciones activas del alumno autenticado,
- * incluyendo los datos del evento asociado para la validación de horarios.
- *
- * @param {string} userId - UUID del alumno autenticado.
- * @returns {Promise<Array<Object>>} Lista de inscripciones enriquecidas con datos del evento.
- */
-async function _obtenerInscripcionesDelAlumno(userId) {
-  if (!_hayConexion()) {
-    // Fallback: filtrar inscripciones del alumno desde LocalStorage
-    const todas = _leerInscripcionesLocales();
-    return todas.filter((ins) => ins.user_id === userId);
-  }
-
-  try {
-    // Consulta: inscripciones del alumno + datos del evento (join implícito via select)
-    const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
-    url.searchParams.set('select', `*,${TABLA_EVENTOS}(id,titulo,fecha_inicio,hora_inicio,hora_fin,estado,capacidad_max)`);
-    url.searchParams.set('user_id', `eq.${userId}`);
-
-    const respuesta = await fetch(url.toString(), {
-      method:  'GET',
-      headers: _construirHeaders(),
-    });
-
-    if (!respuesta.ok) {
-      const errorBody = await respuesta.json().catch(() => ({}));
-      throw new Error(errorBody.message ?? `Error HTTP ${respuesta.status} al obtener inscripciones.`);
-    }
-
-    const datos = await respuesta.json();
-    return Array.isArray(datos) ? datos : [];
-  } catch (err) {
-    console.error('[inscriptions] Error al obtener inscripciones del alumno:', err);
-    // Degradar a LocalStorage
-    const todas = _leerInscripcionesLocales();
-    return todas.filter((ins) => ins.user_id === userId);
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 6 – VALIDACIÓN DE AFORO                                             *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Consulta el número actual de inscriptos para un evento y lo compara
- * con la capacidad máxima definida.
- *
- * @param {number|string} eventId   - ID del evento a verificar.
- * @param {number|null}   capacidad - Capacidad máxima del evento (null = ilimitado).
- * @returns {Promise<{disponible: boolean, inscritos: number}>}
- */
-async function _verificarAforo(eventId, capacidad) {
-  // Si el evento no tiene límite de capacidad, siempre está disponible
-  if (capacidad === null || capacidad === undefined) {
-    return { disponible: true, inscritos: 0 };
-  }
-
-  if (!_hayConexion()) {
-    const todas    = _leerInscripcionesLocales();
-    const inscritos = todas.filter((ins) => String(ins.event_id) === String(eventId)).length;
-    return { disponible: inscritos < capacidad, inscritos };
-  }
-
-  try {
-    const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
-    url.searchParams.set('select', 'id');
-    url.searchParams.set('event_id', `eq.${eventId}`);
-
-    // Pedir conteo exacto mediante cabecera Prefer de Supabase
-    const headers = _construirHeaders();
-    headers.set('Prefer', 'count=exact');
-
-    const respuesta = await fetch(url.toString(), {
-      method:  'GET',
-      headers: headers,
-    });
-
-    if (!respuesta.ok) {
-      throw new Error(`Error HTTP ${respuesta.status} al consultar aforo.`);
-    }
-
-    // Supabase devuelve el conteo en la cabecera Content-Range
-    const contentRange = respuesta.headers.get('Content-Range') ?? '';
-    const match        = contentRange.match(/\/(\d+)$/);
-    const inscritos    = match ? parseInt(match[1], 10) : 0;
-
-    return {
-      disponible: inscritos < Number(capacidad),
-      inscritos,
-    };
-  } catch (err) {
-    console.error('[inscriptions] Error al verificar aforo:', err);
-    // En caso de fallo de red, permitir intentar localmente
-    const todas     = _leerInscripcionesLocales();
-    const inscritos = todas.filter((ins) => String(ins.event_id) === String(eventId)).length;
-    return { disponible: inscritos < capacidad, inscritos };
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 7 – INSCRIPCIÓN PRINCIPAL (FLUJO ATÓMICO)                          *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Procesa la inscripción de un alumno a un evento de forma atómica.
- *
- * Flujo:
- *  1. Verifica que el evento esté en estado 'programado'.
- *  2. Comprueba aforo disponible.
- *  3. Detecta cruces de horario y pide confirmación consciente al alumno.
- *  4. Inserta la fila en la tabla `inscripciones`.
- *
- * @param {string} userId         - UUID del alumno autenticado.
- * @param {Object} eventoNuevo    - Objeto con los datos del evento objetivo.
- * @param {number|string} eventoNuevo.id
- * @param {string} eventoNuevo.titulo
- * @param {string} eventoNuevo.fecha_inicio  - YYYY-MM-DD
- * @param {string} eventoNuevo.hora_inicio   - HH:MM
- * @param {string} eventoNuevo.hora_fin      - HH:MM
- * @param {string} eventoNuevo.estado        - Valor de CONFIG_SISTEMA.STATUS_EVENTO
- * @param {number|null} eventoNuevo.capacidad_max
- * @param {HTMLButtonElement|null} [btnRef=null] - Botón de referencia para mutar visualmente.
- * @returns {Promise<{exito: boolean, mensaje: string, inscripcion?: Object}>}
- */
-export async function inscribir(userId, eventoNuevo, btnRef = null) {
-  try {
-    /* ── 1. Validar estado del evento ──────────────────────────────────── */
-    if (eventoNuevo.estado !== CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO) {
-      const msgEstado = eventoNuevo.estado === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO
-        ? 'Las inscripciones a este evento ya están cerradas (evento en curso).'
-        : 'No es posible inscribirse a un evento finalizado.';
-      mostrarAlertaFlotante(msgEstado, 'error');
-      return { exito: false, mensaje: msgEstado };
-    }
-
-    /* ── 2. Verificar aforo ────────────────────────────────────────────── */
-    const { disponible, inscritos } = await _verificarAforo(
-      eventoNuevo.id,
-      eventoNuevo.capacidad_max,
+    localStorage.setItem(
+        STORAGE_KEYS.INSCRIPCIONES_LOCAL ?? 'fisi_inscripciones',
+        JSON.stringify(inscripciones)
     );
+}
 
-    if (!disponible) {
-      // Mutar el botón a "LLENO" si se proporcionó referencia
-      if (btnRef) {
-        btnRef.disabled    = true;
-        btnRef.textContent = 'LLENO';
-        btnRef.classList.add('btn-evento-lleno');
-      }
-      const msgAforo = `Este evento ha alcanzado su capacidad máxima (${inscritos} inscritos). Cupos agotados.`;
-      mostrarAlertaFlotante(msgAforo, 'aviso');
-      return { exito: false, mensaje: msgAforo };
-    }
-
-    /* ── 3. Obtener inscripciones actuales del alumno ──────────────────── */
-    const inscripcionesActuales = await _obtenerInscripcionesDelAlumno(userId);
-
-    /* ── 4. Detectar cruces de horario ─────────────────────────────────── */
-    let hayChoque = false;
-
-    for (const ins of inscripcionesActuales) {
-      // El objeto del evento puede estar anidado en la propiedad 'eventos' (join de Supabase)
-      const evExistente = ins.eventos ?? ins;
-
-      if (!evExistente.fecha_inicio || !evExistente.hora_inicio || !evExistente.hora_fin) {
-        continue; // Datos incompletos, no se puede comparar
-      }
-
-      if (
-        _eventosColisionan(
-          eventoNuevo.fecha_inicio,
-          eventoNuevo.hora_inicio,
-          eventoNuevo.hora_fin,
-          evExistente.fecha_inicio,
-          evExistente.hora_inicio,
-          evExistente.hora_fin,
-        )
-      ) {
-        hayChoque = true;
-        break;
-      }
-    }
-
-    if (hayChoque) {
-      const confirmado = await verificarYConfirmarChoqueHorario(
-        eventoNuevo.titulo,
-        eventoNuevo.fecha_inicio,
-        eventoNuevo.hora_inicio,
-        eventoNuevo.hora_fin,
-      );
-
-      if (!confirmado) {
-        return { exito: false, mensaje: 'Inscripción cancelada por el alumno (choque de horario).' };
-      }
-    }
-
-    /* ── 5. Insertar la inscripción ────────────────────────────────────── */
-    const nuevaInscripcion = {
-      user_id:          userId,
-      event_id:         eventoNuevo.id,
-      fecha_inscripcion: new Date().toISOString(),
+/* ── Algoritmo de colisión temporal ─────────────────────── */
+function _eventosColisionan(fechaA, inicioA, finA, fechaB, inicioB, finB) {
+    if (fechaA !== fechaB) return false;
+    const toMin = (h) => {
+        if (!h) return null;
+        const p = String(h).split(':').map(Number);
+        return p[0] * 60 + (p[1] ?? 0);
     };
-
-    if (_hayConexion()) {
-      const url      = `${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`;
-      const respuesta = await fetch(url, {
-        method:  'POST',
-        headers: _construirHeaders(),
-        body:    JSON.stringify(nuevaInscripcion),
-      });
-
-      if (respuesta.status === 409) {
-        // Violación de UNIQUE(user_id, event_id) → ya estaba inscrito
-        const msgDuplicado = 'Ya estás inscrito en este evento.';
-        mostrarAlertaFlotante(msgDuplicado, 'aviso');
-        return { exito: false, mensaje: msgDuplicado };
-      }
-
-      if (!respuesta.ok) {
-        const errorBody = await respuesta.json().catch(() => ({}));
-        throw new Error(errorBody.message ?? `Error HTTP ${respuesta.status} al inscribir.`);
-      }
-
-      const [inscripcionCreada] = await respuesta.json();
-      mostrarAlertaFlotante(`¡Inscripción exitosa a "${eventoNuevo.titulo}"!`, 'exito');
-      return { exito: true, mensaje: 'Inscripción registrada correctamente.', inscripcion: inscripcionCreada };
-    } else {
-      // Fallback offline: guardar en LocalStorage
-      const locales = _leerInscripcionesLocales();
-
-      const yaExiste = locales.some(
-        (ins) => ins.user_id === userId && String(ins.event_id) === String(eventoNuevo.id),
-      );
-      if (yaExiste) {
-        const msgDuplicado = 'Ya estás inscrito en este evento.';
-        mostrarAlertaFlotante(msgDuplicado, 'aviso');
-        return { exito: false, mensaje: msgDuplicado };
-      }
-
-      nuevaInscripcion.id = Date.now(); // ID temporal offline
-      locales.push(nuevaInscripcion);
-      _guardarInscripcionesLocales(locales);
-
-      mostrarAlertaFlotante(
-        `Inscripción guardada localmente (sin conexión) para "${eventoNuevo.titulo}".`,
-        'aviso',
-      );
-      return { exito: true, mensaje: 'Inscripción registrada en modo offline.', inscripcion: nuevaInscripcion };
-    }
-  } catch (err) {
-    console.error('[inscriptions] Error crítico al inscribir:', err);
-    mostrarAlertaFlotante('Ocurrió un error inesperado al procesar la inscripción.', 'error');
-    return { exito: false, mensaje: err.message ?? 'Error desconocido.' };
-  }
+    const iA = toMin(inicioA), fA = toMin(finA);
+    const iB = toMin(inicioB), fB = toMin(finB);
+    if (fA === null || fB === null) return false;
+    return iA < fB && iB < fA;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 8 – CANCELAR INSCRIPCIÓN                                            *
- * ─────────────────────────────────────────────────────────────────────────── */
+/* ── Obtener inscripciones del alumno ────────────────────── */
+async function _obtenerInscripcionesDelAlumno(userId) {
+    if (!_hayConexion()) {
+        return _leerInscripcionesLocales().filter(ins => ins.user_id === userId);
+    }
+    try {
+        const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
+        url.searchParams.set('select', `*,${TABLA_EVENTOS}(id,titulo,fecha_inicio,hora_inicio,hora_fin,estado,capacidad_max)`);
+        url.searchParams.set('user_id', `eq.${userId}`);
+        const resp = await fetch(url.toString(), { method: 'GET', headers: _construirHeaders() });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const datos = await resp.json();
+        return Array.isArray(datos) ? datos : [];
+    } catch (err) {
+        console.error('[inscriptions] Error obteniendo inscripciones:', err);
+        return _leerInscripcionesLocales().filter(ins => ins.user_id === userId);
+    }
+}
 
-/**
- * Cancela la inscripción de un alumno a un evento.
- *
- * @param {string} userId   - UUID del alumno autenticado.
- * @param {number|string} eventId - ID del evento a cancelar.
- * @returns {Promise<{exito: boolean, mensaje: string}>}
- */
+/* ── Verificar aforo ─────────────────────────────────────── */
+async function _verificarAforo(eventId, capacidad) {
+    if (capacidad === null || capacidad === undefined) return { disponible: true, inscritos: 0 };
+    if (!_hayConexion()) {
+        const todas    = _leerInscripcionesLocales();
+        const inscritos = todas.filter(ins => String(ins.event_id) === String(eventId)).length;
+        return { disponible: inscritos < capacidad, inscritos };
+    }
+    try {
+        const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
+        url.searchParams.set('select',   'id');
+        url.searchParams.set('event_id', `eq.${eventId}`);
+        const headers = _construirHeaders();
+        headers.set('Prefer', 'count=exact');
+        const resp = await fetch(url.toString(), { method: 'GET', headers });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const cr       = resp.headers.get('Content-Range') ?? '';
+        const match    = cr.match(/\/(\d+)$/);
+        const inscritos = match ? parseInt(match[1], 10) : 0;
+        return { disponible: inscritos < Number(capacidad), inscritos };
+    } catch (err) {
+        console.error('[inscriptions] Error verificando aforo:', err);
+        const todas     = _leerInscripcionesLocales();
+        const inscritos = todas.filter(ins => String(ins.event_id) === String(eventId)).length;
+        return { disponible: inscritos < capacidad, inscritos };
+    }
+}
+
+/* ============================================================
+   inscribir — flujo principal
+   ============================================================ */
+export async function inscribir(userId, eventoNuevo, btnRef = null) {
+    try {
+        // 1. Validar estado del evento
+        const estadoEvento = eventoNuevo.estado || eventoNuevo.status;
+        if (estadoEvento !== CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO) {
+            const msgEstado = estadoEvento === CONFIG_SISTEMA.STATUS_EVENTO.EN_CURSO
+                ? 'Las inscripciones ya están cerradas (evento en curso).'
+                : 'No es posible inscribirse a un evento finalizado.';
+            mostrarAlertaFlotante(msgEstado, 'error');
+            return { exito: false, mensaje: msgEstado };
+        }
+
+        // 2. Verificar aforo
+        const { disponible, inscritos } = await _verificarAforo(
+            eventoNuevo.id,
+            eventoNuevo.capacidad_max ?? eventoNuevo.maxCapacity
+        );
+        if (!disponible) {
+            if (btnRef) { btnRef.disabled = true; btnRef.textContent = 'LLENO'; }
+            const msgAforo = `Evento al máximo de capacidad (${inscritos} inscritos).`;
+            mostrarAlertaFlotante(msgAforo, 'aviso');
+            return { exito: false, mensaje: msgAforo };
+        }
+
+        // 3. Obtener inscripciones actuales
+        const inscripcionesActuales = await _obtenerInscripcionesDelAlumno(userId);
+
+        // 4. Detectar cruces de horario
+        let hayChoque = false;
+        for (const ins of inscripcionesActuales) {
+            const ev = ins.eventos ?? ins;
+            if (!ev.fecha_inicio || !ev.hora_inicio || !ev.hora_fin) continue;
+            if (_eventosColisionan(
+                eventoNuevo.fecha_inicio || eventoNuevo.startDate,
+                eventoNuevo.hora_inicio  || eventoNuevo.startTime,
+                eventoNuevo.hora_fin     || eventoNuevo.endTime,
+                ev.fecha_inicio, ev.hora_inicio, ev.hora_fin
+            )) { hayChoque = true; break; }
+        }
+
+        if (hayChoque) {
+            const confirmado = await verificarYConfirmarChoqueHorario(
+                eventoNuevo.titulo || eventoNuevo.title,
+                eventoNuevo.fecha_inicio || eventoNuevo.startDate,
+                eventoNuevo.hora_inicio  || eventoNuevo.startTime,
+                eventoNuevo.hora_fin     || eventoNuevo.endTime,
+            );
+            if (!confirmado) return { exito: false, mensaje: 'Inscripción cancelada por choque de horario.' };
+        }
+
+        // 5. Insertar la inscripción
+        const nuevaInscripcion = {
+            user_id:           userId,
+            event_id:          eventoNuevo.id,
+            fecha_inscripcion: new Date().toISOString(),
+        };
+
+        if (_hayConexion()) {
+            const url  = `${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`;
+            const resp = await fetch(url, {
+                method:  'POST',
+                headers: _construirHeaders(),
+                body:    JSON.stringify(nuevaInscripcion),
+            });
+            if (resp.status === 409) {
+                const msgDup = 'Ya estás inscrito en este evento.';
+                mostrarAlertaFlotante(msgDup, 'aviso');
+                return { exito: false, mensaje: msgDup };
+            }
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.message ?? `HTTP ${resp.status}`);
+            }
+            const [inscripcionCreada] = await resp.json();
+            mostrarAlertaFlotante(`¡Inscripción exitosa a "${eventoNuevo.titulo || eventoNuevo.title}"!`, 'exito');
+            return { exito: true, mensaje: 'Inscripción registrada.', inscripcion: inscripcionCreada };
+        } else {
+            const locales  = _leerInscripcionesLocales();
+            const yaExiste = locales.some(
+                ins => ins.user_id === userId && String(ins.event_id) === String(eventoNuevo.id)
+            );
+            if (yaExiste) {
+                const msgDup = 'Ya estás inscrito en este evento.';
+                mostrarAlertaFlotante(msgDup, 'aviso');
+                return { exito: false, mensaje: msgDup };
+            }
+            nuevaInscripcion.id = Date.now();
+            locales.push(nuevaInscripcion);
+            _guardarInscripcionesLocales(locales);
+            mostrarAlertaFlotante(`Inscripción guardada localmente (sin conexión).`, 'aviso');
+            return { exito: true, mensaje: 'Inscripción en modo offline.', inscripcion: nuevaInscripcion };
+        }
+    } catch (err) {
+        console.error('[inscriptions] Error crítico al inscribir:', err);
+        mostrarAlertaFlotante('Error inesperado al procesar la inscripción.', 'error');
+        return { exito: false, mensaje: err.message ?? 'Error desconocido.' };
+    }
+}
+
+/* ============================================================
+   cancelarInscripcion
+   ============================================================ */
 export async function cancelarInscripcion(userId, eventId) {
-  try {
-    if (_hayConexion()) {
-      const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
-      url.searchParams.set('user_id',  `eq.${userId}`);
-      url.searchParams.set('event_id', `eq.${eventId}`);
-
-      const respuesta = await fetch(url.toString(), {
-        method:  'DELETE',
-        headers: _construirHeaders(),
-      });
-
-      if (!respuesta.ok) {
-        const errorBody = await respuesta.json().catch(() => ({}));
-        throw new Error(errorBody.message ?? `Error HTTP ${respuesta.status} al cancelar.`);
-      }
-
-      mostrarAlertaFlotante('Inscripción cancelada exitosamente.', 'exito');
-      return { exito: true, mensaje: 'Inscripción eliminada de la base de datos.' };
-    } else {
-      // Fallback offline
-      const locales     = _leerInscripcionesLocales();
-      const filtradas   = locales.filter(
-        (ins) => !(ins.user_id === userId && String(ins.event_id) === String(eventId)),
-      );
-      _guardarInscripcionesLocales(filtradas);
-
-      mostrarAlertaFlotante('Inscripción cancelada localmente (sin conexión).', 'aviso');
-      return { exito: true, mensaje: 'Inscripción eliminada en modo offline.' };
+    try {
+        if (_hayConexion()) {
+            const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
+            url.searchParams.set('user_id',  `eq.${userId}`);
+            url.searchParams.set('event_id', `eq.${eventId}`);
+            const resp = await fetch(url.toString(), { method: 'DELETE', headers: _construirHeaders() });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.message ?? `HTTP ${resp.status}`);
+            }
+            mostrarAlertaFlotante('Inscripción cancelada exitosamente.', 'exito');
+            return { exito: true, mensaje: 'Inscripción eliminada de la base de datos.' };
+        } else {
+            const locales  = _leerInscripcionesLocales();
+            const filtradas = locales.filter(
+                ins => !(ins.user_id === userId && String(ins.event_id) === String(eventId))
+            );
+            _guardarInscripcionesLocales(filtradas);
+            mostrarAlertaFlotante('Inscripción cancelada localmente (sin conexión).', 'aviso');
+            return { exito: true, mensaje: 'Inscripción eliminada offline.' };
+        }
+    } catch (err) {
+        console.error('[inscriptions] Error al cancelar inscripción:', err);
+        mostrarAlertaFlotante('No se pudo cancelar la inscripción.', 'error');
+        return { exito: false, mensaje: err.message ?? 'Error desconocido.' };
     }
-  } catch (err) {
-    console.error('[inscriptions] Error al cancelar inscripción:', err);
-    mostrarAlertaFlotante('No se pudo cancelar la inscripción. Intente nuevamente.', 'error');
-    return { exito: false, mensaje: err.message ?? 'Error desconocido.' };
-  }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── *
- * SECCIÓN 9 – VERIFICAR INSCRIPCIÓN EXISTENTE                                 *
- * ─────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Comprueba si un alumno ya está inscrito en un evento específico.
- *
- * @param {string} userId  - UUID del alumno.
- * @param {number|string} eventId - ID del evento.
- * @returns {Promise<boolean>} `true` si ya existe una inscripción.
- */
+/* ============================================================
+   estaInscrito
+   ============================================================ */
 export async function estaInscrito(userId, eventId) {
-  try {
-    if (_hayConexion()) {
-      const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
-      url.searchParams.set('select',   'id');
-      url.searchParams.set('user_id',  `eq.${userId}`);
-      url.searchParams.set('event_id', `eq.${eventId}`);
-      url.searchParams.set('limit',    '1');
-
-      const headers = _construirHeaders();
-      headers.set('Prefer', 'count=exact');
-
-      const respuesta = await fetch(url.toString(), { method: 'GET', headers });
-      if (!respuesta.ok) return false;
-
-      const datos = await respuesta.json();
-      return Array.isArray(datos) && datos.length > 0;
-    } else {
-      const locales = _leerInscripcionesLocales();
-      return locales.some(
-        (ins) => ins.user_id === userId && String(ins.event_id) === String(eventId),
-      );
+    try {
+        if (_hayConexion()) {
+            const url = new URL(`${DB_VARS.URL}/rest/v1/${TABLA_INSCRIPCIONES}`);
+            url.searchParams.set('select',   'id');
+            url.searchParams.set('user_id',  `eq.${userId}`);
+            url.searchParams.set('event_id', `eq.${eventId}`);
+            url.searchParams.set('limit',    '1');
+            const resp = await fetch(url.toString(), { method: 'GET', headers: _construirHeaders() });
+            if (!resp.ok) return false;
+            const datos = await resp.json();
+            return Array.isArray(datos) && datos.length > 0;
+        } else {
+            return _leerInscripcionesLocales().some(
+                ins => ins.user_id === userId && String(ins.event_id) === String(eventId)
+            );
+        }
+    } catch {
+        return false;
     }
-  } catch {
-    return false;
-  }
 }
 
-/**
- * Recupera las inscripciones completas de un alumno (con datos de evento).
- * Expuesto para uso externo en los dashboards.
- *
- * @param {string} userId - UUID del alumno.
- * @returns {Promise<Array<Object>>}
- */
+/* ============================================================
+   obtenerMisInscripciones / obtenerInscripcionesAlumno
+   — con datos enriquecidos del evento para el dashboard
+   ============================================================ */
 export async function obtenerMisInscripciones(userId) {
-  return _obtenerInscripcionesDelAlumno(userId);
+    return _obtenerInscripcionesDelAlumno(userId);
+}
+
+// Alias para dashboard-alumno.html
+export async function obtenerInscripcionesAlumno(userId) {
+    const raw = await _obtenerInscripcionesDelAlumno(userId);
+    // Normalizar a formato JS camelCase con datos del evento aplanados
+    return raw.map(ins => {
+        const ev = ins.eventos ?? {};
+        return {
+            id:           ins.id,
+            userId:       ins.user_id,
+            eventId:      ins.event_id,
+            inscribedAt:  ins.fecha_inscripcion,
+            // Datos del evento (pueden venir del join o de la inscripción local)
+            title:        ev.titulo       || ins.titulo       || '',
+            category:     ev.categoria    || ins.categoria    || '',
+            startDate:    ev.fecha_inicio || ins.fecha_inicio || '',
+            startTime:    ev.hora_inicio  || ins.hora_inicio  || '',
+            endTime:      ev.hora_fin     || ins.hora_fin     || '',
+            estado:       ev.estado       || ins.estado       || CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO,
+            status:       ev.estado       || ins.estado       || CONFIG_SISTEMA.STATUS_EVENTO.PROGRAMADO,
+            maxCapacity:  ev.capacidad_max ?? ins.capacidad_max ?? null,
+        };
+    });
 }
