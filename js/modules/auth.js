@@ -57,6 +57,7 @@ function _validarUsername(username) {
 }
 
 function _usernameAEmail(username) {
+    // Engañamos a Supabase en el fondo creando un correo virtual válido
     return `${username.trim().toLowerCase()}@fisievents.unmsm.edu.pe`;
 }
 
@@ -111,19 +112,25 @@ function _construirPayloadUsuario(uuid, formData) {
 export async function registrar(username, password, formData) {
     try {
         const validUser = _validarUsername(username);
-        if (!validUser.valido) return { exito: false, mensaje: mostrarAlertaFlotante(validUser.mensaje, 'error') };
-        if (!password || password.length < 8) return { exito: false, mensaje: mostrarAlertaFlotante('Contraseña mínima 8 caracteres', 'error') };
+        if (!validUser.valido) {
+            mostrarAlertaFlotante(validUser.mensaje, 'error');
+            return { exito: false };
+        }
+        if (!password || password.length < 8) {
+            mostrarAlertaFlotante('Contraseña mínima 8 caracteres', 'error');
+            return { exito: false };
+        }
 
         const esGrupo = (formData.role === 'organizador' && formData.organizerType === 'grupo');
 
         // Solo exigir nombres si NO es un grupo
         if (!esGrupo) {
             const vNom = _validarTextoAlfabetico(formData.firstName, 'Nombres');
-            if (!vNom.valido) return { exito: false, mensaje: mostrarAlertaFlotante(vNom.mensaje, 'error') };
+            if (!vNom.valido) { mostrarAlertaFlotante(vNom.mensaje, 'error'); return { exito: false }; }
             const vApe = _validarTextoAlfabetico(formData.lastName, 'Apellidos');
-            if (!vApe.valido) return { exito: false, mensaje: mostrarAlertaFlotante(vApe.mensaje, 'error') };
+            if (!vApe.valido) { mostrarAlertaFlotante(vApe.mensaje, 'error'); return { exito: false }; }
         } else {
-            if (!formData.groupName) return { exito: false, mensaje: mostrarAlertaFlotante('Falta nombre del grupo', 'error') };
+            if (!formData.groupName) { mostrarAlertaFlotante('Falta nombre del grupo', 'error'); return { exito: false }; }
         }
 
         const emailVirtual = _usernameAEmail(username);
@@ -134,7 +141,10 @@ export async function registrar(username, password, formData) {
         });
 
         const authData = await authResponse.json();
-        if (!authResponse.ok) return { exito: false, mensaje: mostrarAlertaFlotante(authData.message || 'Error en registro', 'error') };
+        if (!authResponse.ok) {
+            mostrarAlertaFlotante(authData.message || 'Error en registro', 'error');
+            return { exito: false };
+        }
 
         const payloadSQL = _construirPayloadUsuario(authData.user.id, formData);
         const perfilResponse = await fetch(TABLA_USUARIOS_URL, {
@@ -143,7 +153,10 @@ export async function registrar(username, password, formData) {
             body: JSON.stringify(payloadSQL),
         });
 
-        if (!perfilResponse.ok) return { exito: false, mensaje: mostrarAlertaFlotante('Error guardando perfil', 'error') };
+        if (!perfilResponse.ok) {
+            mostrarAlertaFlotante('Error guardando perfil', 'error');
+            return { exito: false };
+        }
         
         const [perfilCreado] = await perfilResponse.json();
         _persistirSesion(authData.access_token, perfilCreado, formData.role);
@@ -159,7 +172,10 @@ export async function registrar(username, password, formData) {
 // ── INICIO DE SESIÓN ──
 export async function iniciarSesion(username, password) {
     try {
-        if (!username || !password) return { exito: false, mensaje: mostrarAlertaFlotante('Campos incompletos', 'error') };
+        if (!username || !password) {
+            mostrarAlertaFlotante('Campos incompletos', 'error');
+            return { exito: false };
+        }
 
         const emailVirtual = _usernameAEmail(username);
         const authResponse = await fetch(AUTH_SIGNIN_URL, {
@@ -169,13 +185,19 @@ export async function iniciarSesion(username, password) {
         });
         
         const authData = await authResponse.json();
-        if (!authResponse.ok) return { exito: false, mensaje: mostrarAlertaFlotante('Usuario o contraseña incorrectos', 'error') };
+        if (!authResponse.ok) {
+            mostrarAlertaFlotante('Usuario o contraseña incorrectos', 'error');
+            return { exito: false };
+        }
 
         const perfilURL = `${TABLA_USUARIOS_URL}?select=*&id=eq.${authData.user.id}&limit=1`;
         const perfilResponse = await fetch(perfilURL, { method: 'GET', headers: _headersREST(authData.access_token) });
         const perfiles = await perfilResponse.json();
 
-        if (perfiles.length === 0) return { exito: false, mensaje: mostrarAlertaFlotante('Perfil no encontrado', 'error') };
+        if (perfiles.length === 0) {
+            mostrarAlertaFlotante('Perfil no encontrado', 'error');
+            return { exito: false };
+        }
 
         const perfil = perfiles[0];
         _persistirSesion(authData.access_token, perfil, perfil.rol);
