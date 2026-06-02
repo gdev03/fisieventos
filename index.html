@@ -1,59 +1,88 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Eventos - FISI Events</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/catalog.css">
-    <link rel="stylesheet" href="css/calendar.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Eventos - FISI Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/catalog.css">
+  <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
-    <header class="main-navbar">
-        <div class="container nav-wrapper">
-            <div class="nav-brand">
-                <img src="assets/img/logo.png" alt="Logo FISI" width="45" height="45">
-                <h1>FISI Events</h1>
-            </div>
-            <div class="nav-auth-area">
-                <ul id="nav-links" class="auth-guest">
-                    <li><a href="index.html" class="active">Catálogo</a></li>
-                    <li><a href="login.html" id="login-link" class="btn-login">Iniciar Sesión</a></li>
-                </ul>
-            </div>
-        </div>
-    </header>
 
-    <section class="search-filters-section">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar evento por nombre..." autocomplete="off">
-        </div>
-        <div class="filters-container">
-            <button class="filter-btn" data-category="charla">Charlas</button>
-            <button class="filter-btn" data-category="taller">Talleres</button>
-            <button class="filter-btn" data-category="seminario">Seminarios</button>
-            <button class="filter-btn" data-category="congreso">Congresos</button>
-        </div>
+  <!-- ═══════════════════════════════════════════════════
+       NAVBAR (renderizado dinámicamente por ui-global.js)
+  ═══════════════════════════════════════════════════ -->
+  <header class="main-navbar">
+    <div class="container nav-wrapper">
+      <div class="nav-brand">
+        <span class="nav-logo-icon">🎓</span>
+        <h1>FISI Events</h1>
+      </div>
+      <nav>
+        <ul id="nav-links" class="auth-guest">
+          <!-- Estado sin sesión -->
+          <li class="auth-guest-item"><a href="index.html" class="nav-link active">Catálogo</a></li>
+          <li class="auth-guest-item"><a href="login.html" class="btn-login">Iniciar Sesión</a></li>
+          <!-- Estado con sesión (inyectado por ui-global.js) -->
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════
+       HERO / BUSCADOR
+  ═══════════════════════════════════════════════════ -->
+  <section class="search-filters-section">
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Buscar evento por nombre…"
+        autocomplete="off"
+        aria-label="Buscar eventos"
+      >
+    </div>
+    <div class="filters-container" role="group" aria-label="Filtrar por categoría">
+      <button id="btn-todos"   class="filter-btn active" data-category="todos">   Todos     </button>
+      <button class="filter-btn" data-category="charla">   Charlas   </button>
+      <button class="filter-btn" data-category="taller">   Talleres  </button>
+      <button class="filter-btn" data-category="seminario">Seminarios</button>
+      <button class="filter-btn" data-category="congreso"> Congresos </button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       LAYOUT PRINCIPAL: CATÁLOGO + CALENDARIO
+  ═══════════════════════════════════════════════════ -->
+  <main class="catalog-layout">
+
+    <!-- Grilla de eventos -->
+    <section class="catalog-grid" id="events-container" aria-live="polite">
+      <!-- Renderizado por catalog-render.js -->
     </section>
 
-    <main class="catalog-layout">
+    <!-- Calendario lateral -->
+    <aside class="calendar-sidebar" aria-label="Calendario mensual">
+      <div class="calendar-header">
+        <h3 id="calendar-month-year">Cargando…</h3>
+      </div>
+      <!-- Los días de semana los inyecta calendar-render.js -->
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </aside>
 
-        <section class="catalog-grid" id="events-container">
- 
-</section>
+  </main>
 
-        <aside class="calendar-sidebar">
-            <div class="calendar-header">
-                <h3 id="calendar-month-year">Mes Actual</h3>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-                </div>
-        </aside>
-    </main>
-
-    <script type="module" src="js/config.js"></script>
-    <script type="module" src="js/utils/calendar-render.js"></script>
-    <script type="module" src="js/utils/catalog-render.js"></script>
+  <!-- ═══════════════════════════════════════════════════
+       SCRIPTS (type="module" = carga diferida automática)
+  ═══════════════════════════════════════════════════ -->
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/ui-global.js"></script>
+  <script type="module" src="js/utils/catalog-render.js"></script>
+  <script type="module" src="js/utils/calendar-render.js"></script>
 
 </body>
 </html>
