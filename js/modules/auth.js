@@ -90,14 +90,19 @@ export function getUsuarioLogueado() {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Valida que el nombre de usuario sea alfanumérico simple.
- * @param {string} username
+ * Valida el código de estudiante UNMSM.
+ * Debe ser exclusivamente numérico con longitud entre 8 y 10 caracteres.
+ *
+ * @param {string} codigo
  * @returns {{ valido: boolean, mensaje: string }}
  */
-function _validarUsername(username) {
-  const regex = /^[a-zA-Z0-9._-]+$/;
-  if (!username || !regex.test(username.trim())) {
-    return { valido: false, mensaje: 'El nombre de usuario no es válido. Usa letras, números o puntos.' };
+function _validarCodigoEstudiante(codigo) {
+  const regex = /^\d{8,10}$/;
+  if (!codigo || !regex.test(String(codigo).trim())) {
+    return {
+      valido:  false,
+      mensaje: 'El código de estudiante debe contener entre 8 y 10 dígitos numéricos.',
+    };
   }
   return { valido: true, mensaje: '' };
 }
@@ -125,13 +130,19 @@ function _validarTextoAlfabetico(valor, nombreCampo) {
  * @param {string} email
  * @returns {{ valido: boolean, mensaje: string }}
  */
-function _validarEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !regex.test(email.trim())) {
-    return { valido: false, mensaje: 'El correo electrónico no es válido.' };
-  }
-  return { valido: true, mensaje: '' };
+
+function _validarUsername(username) {
+    if (!username || username.trim().length < 4) {
+        return { valido: false, mensaje: 'El usuario debe tener al menos 4 caracteres sin espacios.' };
+    }
+    return { valido: true, mensaje: '' };
 }
+
+// Truco: Convierte el username en un correo virtual para engañar a Supabase Auth
+function _usernameAEmail(username) {
+    return `${username.trim().toLowerCase()}@fisievents.unmsm.edu.pe`;
+}
+
 
 /**
  * Valida que la contraseña cumpla longitud mínima de 8 caracteres.
@@ -166,14 +177,15 @@ function _validarPassword(password) {
  * @returns {Object} Payload SQL-compatible para la tabla `usuarios`.
  */
 function _construirPayloadUsuario(uuid, formData) {
-  const rol = formData.role;
+    const rol = formData.role;
+    const base = {
+        id: uuid,
+        username: formData.username.trim(), // Agregamos el username
+        nombres: String(formData.firstName).trim(),
+        apellidos: String(formData.lastName).trim(),
+        rol: rol,
+    };
 
-  const base = {
-    id:       uuid,
-    nombres:  String(formData.firstName).trim(),
-    apellidos: String(formData.lastName).trim(),
-    rol:      rol,
-  };
 
   if (rol === CONFIG_SISTEMA.ROLES.ALUMNO) {
     // Campos de alumno: obligatorios
@@ -227,15 +239,17 @@ function _construirPayloadUsuario(uuid, formData) {
  * @param {Object} formData - Datos del formulario (ver _construirPayloadUsuario).
  * @returns {Promise<{exito: boolean, mensaje: string, usuario?: Object}>}
  */
+
 export async function registrar(username, password, formData) {
   try {
     /* ── 1. Validaciones de cliente ─────────────────────────────────────── */
-    const const validEmail = _validarUsername(username);
-    if (!validEmail.valido) {
-      mostrarAlertaFlotante(validEmail.mensaje, 'error');
-      return { exito: false, mensaje: validEmail.mensaje };
-    }
-
+        const validUser = _validarUsername(username);
+        if (!validUser.valido) {
+            mostrarAlertaFlotante(validUser.mensaje, 'error');
+            return { exito: false, mensaje: validUser.mensaje };
+        }
+        
+    const emailVirtual = _usernameAEmail(username); 
     const validPass = _validarPassword(password);
     if (!validPass.valido) {
       mostrarAlertaFlotante(validPass.mensaje, 'error');
@@ -292,11 +306,12 @@ export async function registrar(username, password, formData) {
     }
 
     /* ── 2. Crear usuario en Supabase Auth ─────────────────────────────── */
-    const authResponse = await fetch(AUTH_SIGNUP_URL, {
-      method:  'POST',
-      headers: _headersAuth(),
-      body:    JSON.stringify({ email: email.trim(), password }),
-    });
+        // Envía el email virtual a Supabase
+        const authResponse = await fetch(AUTH_SIGNUP_URL, {
+            method: 'POST',
+            headers: _headersAuth(),
+            body: JSON.stringify({ email: emailVirtual, password }),
+        });
 
     const authData = await authResponse.json();
 
@@ -356,14 +371,33 @@ export async function registrar(username, password, formData) {
  * @param {string} password - Contraseña.
  * @returns {Promise<{exito: boolean, mensaje: string, usuario?: Object, role?: string}>}
  */
+
+// MODIFICACIÓN EN FUNCION INICIAR SESIÓN
 export async function iniciarSesion(username, password) {
-  try {
-    /* ── 1. Validaciones de entrada ─────────────────────────────────────── */
-    const validEmail = _validarEmail(username);
-    if (!validEmail.valido) {
-      mostrarAlertaFlotante(validEmail.mensaje, 'error');
-      return { exito: false, mensaje: validEmail.mensaje };
-    }
+    try {
+        if (!username || !password) {
+            mostrarAlertaFlotante('Ingresa tu usuario y contraseña.', 'error');
+            return { exito: false };
+        }
+
+
+
+        const authResponse = await fetch(AUTH_SIGNIN_URL, {
+            method: 'POST',
+            headers: _headersAuth(),
+            body: JSON.stringify({ email: emailVirtual, password })
+        });
+        
+        // ... (Resto del código intacto)
+
+
+export async function iniciarSesion(username, password) {
+    try {
+      /* ── 1. Validaciones de entrada   ─────────────────────────────────────── */
+        if (!username || !password) {
+            mostrarAlertaFlotante('Ingresa tu usuario y contraseña.', 'error');
+            return { exito: false };
+        }
 
     if (!password || password.length === 0) {
       const msg = 'La contraseña no puede estar vacía.';
@@ -371,12 +405,13 @@ export async function iniciarSesion(username, password) {
       return { exito: false, mensaje: msg };
     }
 
+        const emailVirtual = _usernameAEmail(username);
     /* ── 2. Solicitar token a Supabase Auth ─────────────────────────────── */
-    const authResponse = await fetch(AUTH_SIGNIN_URL, {
-      method:  'POST',
-      headers: _headersAuth(),
-      body:    JSON.stringify({ email: email.trim(), password }),
-    });
+        const authResponse = await fetch(AUTH_SIGNIN_URL, {
+            method: 'POST',
+            headers: _headersAuth(),
+            body: JSON.stringify({ email: emailVirtual, password })
+        });
 
     const authData = await authResponse.json();
 
