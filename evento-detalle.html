@@ -1,144 +1,347 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle del Evento - FISI Events</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/event-detail.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle del Evento - FISI Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/event-detail.css">
+  <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
-    <header class="main-navbar">
-        <div class="container nav-wrapper">
-            <div class="nav-brand">
-                <img src="assets/img/logo.png" alt="Logo FISI" width="45" height="45">
-                <h1>FISI Events</h1>
-            </div>
-            <div class="nav-auth-area">
-                <ul id="nav-links" class="auth-guest">
-                    <li><a href="index.html">Catálogo</a></li>
-                    <li><a href="login.html" id="login-link" class="btn-login">Iniciar Sesión</a></li>
-                </ul>
-            </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       NAVBAR (renderizado por ui-global.js)
+  ═══════════════════════════════════════════════════ -->
+  <header class="main-navbar">
+    <div class="container nav-wrapper">
+      <div class="nav-brand">
+        <span class="nav-logo-icon">🎓</span>
+        <h1>FISI Events</h1>
+      </div>
+      <nav>
+        <ul id="nav-links" class="auth-guest">
+          <li class="auth-guest-item"><a href="index.html" class="nav-link">Catálogo</a></li>
+          <li class="auth-guest-item"><a href="login.html" class="btn-login">Iniciar Sesión</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════
+       CONTENIDO PRINCIPAL
+  ═══════════════════════════════════════════════════ -->
+  <div id="loading-state" style="text-align:center;padding:4rem;color:#888;">
+    <p style="font-size:1.5rem">⏳</p>
+    <p>Cargando evento…</p>
+  </div>
+
+  <div id="error-state" class="container" style="display:none;text-align:center;padding:4rem;">
+    <p style="font-size:2.5rem;margin-bottom:1rem;">😕</p>
+    <h2>Evento no encontrado</h2>
+    <p style="color:#666;margin:1rem 0;">El evento solicitado no existe o fue eliminado.</p>
+    <a href="index.html" class="btn-ver-mas" style="display:inline-block;margin-top:1rem;">← Volver al catálogo</a>
+  </div>
+
+  <main id="detail-root" class="detail-layout container" style="display:none;">
+
+    <!-- ── Columna principal ── -->
+    <section class="main-content">
+      <div class="back-link-container">
+        <a href="index.html" class="back-link">← Volver al Catálogo</a>
+      </div>
+
+      <span id="event-badge" class="event-badge">…</span>
+      <h1 id="event-title">…</h1>
+
+      <div class="event-visual-block">
+        <span class="visual-texto">FISI EVENTS</span>
+      </div>
+
+      <div class="event-description-block">
+        <h2>Descripción del Evento</h2>
+        <p id="event-description">Sin descripción disponible.</p>
+      </div>
+
+      <div class="event-expositores-block">
+        <h2>Expositores</h2>
+        <ul id="event-expositores"></ul>
+      </div>
+
+      <!-- Estado del evento -->
+      <div id="event-status-block" class="event-status-block" style="display:none;">
+        <span id="event-status-badge" class="status-badge"></span>
+      </div>
+    </section>
+
+    <!-- ── Sidebar de inscripción ── -->
+    <aside class="sidebar-sticky">
+      <div class="registration-card">
+        <h3>Información de Inscripción</h3>
+
+        <div class="info-item">
+          <span class="icon">📅</span>
+          <div>
+            <strong>Fecha:</strong>
+            <p id="event-date">--/--/----</p>
+          </div>
         </div>
-    </header>
 
-    <main class="detail-layout container">
-        <section class="main-content">
-            <div class="back-link-container">
-                <a href="index.html" class="back-link">← Volver al Catálogo</a>
-            </div>
-            
-            <span id="event-badge" class="event-badge">Cargando...</span>
-            <h1 id="event-title">Cargando título del evento...</h1>
-            
-            <div class="event-visual-block">
-                <div class="visual-placeholder">
-                    <span>IMAGEN</span>
-                </div>
-            </div>
+        <div class="info-item">
+          <span class="icon">⏰</span>
+          <div>
+            <strong>Horario:</strong>
+            <p id="event-time">--:-- - --:--</p>
+          </div>
+        </div>
 
-            <div class="event-description-block">
-                <h2>Descripción del Evento</h2>
-                <p id="event-description">Cargando descripción detallada...</p>
-            </div>
+        <div class="info-item">
+          <span class="icon">👥</span>
+          <div>
+            <strong>Aforo:</strong>
+            <p id="event-aforo">Cargando…</p>
+          </div>
+        </div>
 
-            <div class="event-expositores-block">
-                <h2>Expositores</h2>
-                <ul id="event-expositores">
-                    </ul>
-            </div>
-        </section>
+        <div class="info-item" id="limite-container" style="display:none;">
+          <span class="icon">📋</span>
+          <div>
+            <strong>Límite de inscripción:</strong>
+            <p id="event-limite">--</p>
+          </div>
+        </div>
 
-        <aside class="sidebar-sticky">
-            <div class="registration-card">
-                <h3>Información de Inscripción</h3>
-                
-                <div class="info-item">
-                    <span class="icon">📅</span>
-                    <div>
-                        <strong>Fecha:</strong>
-                        <p id="event-date">--/--/----</p>
-                    </div>
-                </div>
+        <!-- Mensaje para usuarios no logueados -->
+        <div id="msg-no-sesion" class="info-msg" style="display:none;">
+          <p>Debes <a href="login.html">iniciar sesión</a> para inscribirte.</p>
+        </div>
 
-                <div class="info-item">
-                    <span class="icon">⏰</span>
-                    <div>
-                        <strong>Horario:</strong>
-                        <p id="event-time">--:-- - --:--</p>
-                    </div>
-                </div>
+        <!-- Botón principal de acción -->
+        <button
+          id="btn-accion"
+          class="btn-register-visual btn-inscribir"
+          style="display:none;"
+        >
+          Registrarse
+        </button>
 
-                <div class="info-item">
-                    <span class="icon">👥</span>
-                    <div>
-                        <strong>Aforo Disponible:</strong>
-                        <p id="event-aforo">0 / 0 vacantes</p>
-                    </div>
-                </div>
+        <!-- Spinner de carga del botón -->
+        <div id="btn-spinner" style="display:none;text-align:center;padding:1rem;">
+          <span>⏳ Procesando…</span>
+        </div>
+      </div>
+    </aside>
 
-                <button id="btn-accion" class="btn-register-visual">Registrarse</button>
-            </div>
-        </aside>
-    </main>
+  </main>
 
-    <script type="module">
-        import { eventos } from './js/modules/events.js';
+  <!-- ═══════════════════════════════════════════════════
+       LÓGICA DE LA PÁGINA
+  ═══════════════════════════════════════════════════ -->
+  <script type="module" src="js/config.js"></script>
+  <script type="module" src="js/ui-global.js"></script>
+  <script type="module">
+    import { obtenerEventoPorId }                    from './js/modules/events.js';
+    import { getUsuarioLogueado }                    from './js/modules/auth.js';
+    import { inscribir, cancelarInscripcion, estaInscrito } from './js/modules/inscriptions.js';
+    import { mostrarAlertaFlotante }                 from './js/utils/alerts.js';
+    import { CONFIG_SISTEMA }                        from './js/config.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const eventId = parseInt(params.get('id'), 10);
+    const { PROGRAMADO, EN_CURSO, FINALIZADO } = CONFIG_SISTEMA.STATUS_EVENTO;
 
-            const evento = eventos.find(e => e.id === eventId);
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params  = new URLSearchParams(window.location.search);
+      const idParam = params.get('id');
 
-            if (evento) {
-                document.title = `${evento.titulo} - FISI Events`;
-                document.getElementById('event-title').textContent = evento.titulo;
-                document.getElementById('event-description').textContent = evento.descripcion || "No hay descripción disponible para este evento.";
-                document.getElementById('event-badge').textContent = evento.categoria;
-                document.getElementById('event-badge').className = `event-badge badge-${evento.categoria.toLowerCase()}`;
-                
-                document.getElementById('event-date').textContent = evento.fecha_inicio;
-                document.getElementById('event-time').textContent = `${evento.hora_inicio} - ${evento.hora_fin}`;
-                
-                const capacidad = evento.capacidad_max || "Ilimitado";
-                document.getElementById('event-aforo').textContent = `0 / ${capacidad} vacantes ocupadas`;
+      // ── Validar ID ───────────────────────────────────────
+      const eventId = parseInt(idParam, 10);
+      if (!idParam || isNaN(eventId)) {
+        mostrarError();
+        return;
+      }
 
-                const listaExpositores = document.getElementById('event-expositores');
-                listaExpositores.innerHTML = '';
-                if (evento.expositores && evento.expositores.length > 0) {
-                    evento.expositores.forEach(exp => {
-                        const li = document.createElement('li');
-                        li.textContent = exp;
-                        listaExpositores.appendChild(li);
-                    });
-                } else {
-                    listaExpositores.innerHTML = '<li>Expositor por confirmar</li>';
-                }
+      // ── Cargar evento ────────────────────────────────────
+      let evento;
+      try {
+        evento = await obtenerEventoPorId(eventId);
+      } catch (err) {
+        console.error('[evento-detalle]', err);
+        mostrarError();
+        return;
+      }
 
-                const btnAccion = document.getElementById('btn-accion');
-                const yaInscrito = false; 
-                
-                if (yaInscrito) {
-                    btnAccion.textContent = "Cancelar Inscripción";
-                    btnAccion.className = "btn-register-visual btn-cancelar";
-                } else {
-                    btnAccion.textContent = "Registrarse";
-                    btnAccion.className = "btn-register-visual btn-inscribir";
-                }
+      if (!evento) { mostrarError(); return; }
 
-            } else {
-                //Error si el ID no es válido
-                document.getElementById('events-container-layout').innerHTML = `
-                    <div class="error-container">
-                        <h2>Error 404: Evento no encontrado</h2>
-                        <p>El evento solicitado no existe o fue cancelado.</p>
-                        <a href="index.html">Volver al catálogo principal</a>
-                    </div>
-                `;
-            }
+      // ── Renderizar datos del evento ──────────────────────
+      renderizarEvento(evento);
+
+      // ── Obtener sesión activa ────────────────────────────
+      const sesion = getUsuarioLogueado();
+
+      // ── Configurar botón de acción ───────────────────────
+      await configurarBoton(evento, sesion);
+
+      // ── Mostrar contenido ────────────────────────────────
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('detail-root').style.display   = 'grid';
+    });
+
+    /* ── Helpers ────────────────────────────────────────── */
+
+    function renderizarEvento(ev) {
+      document.title = `${ev.titulo} - FISI Events`;
+
+      // Badge de categoría
+      const badge = document.getElementById('event-badge');
+      badge.textContent  = capitalizar(ev.categoria || '');
+      badge.className    = `event-badge badge-${ev.categoria || 'charla'}`;
+
+      document.getElementById('event-title').textContent =
+        ev.titulo || 'Sin título';
+
+      document.getElementById('event-description').textContent =
+        ev.descripcion || 'No hay descripción disponible para este evento.';
+
+      // Fecha y horario
+      document.getElementById('event-date').textContent = formatearFecha(ev.fecha_inicio);
+      document.getElementById('event-time').textContent =
+        ev.hora_inicio && ev.hora_fin
+          ? `${ev.hora_inicio} – ${ev.hora_fin}`
+          : ev.hora_inicio || '--:--';
+
+      // Aforo
+      const afoEl = document.getElementById('event-aforo');
+      afoEl.textContent = ev.capacidad_max
+        ? `Máx. ${ev.capacidad_max} personas`
+        : 'Sin límite de aforo';
+
+      // Límite de inscripción
+      if (ev.limite_inscripcion) {
+        document.getElementById('limite-container').style.display = 'flex';
+        document.getElementById('event-limite').textContent = formatearFecha(ev.limite_inscripcion);
+      }
+
+      // Expositores
+      const lista = document.getElementById('event-expositores');
+      lista.innerHTML = '';
+      const exps = ev.expositores || [];
+      if (exps.length > 0) {
+        exps.forEach(exp => {
+          const li = document.createElement('li');
+          li.textContent = exp;
+          lista.appendChild(li);
         });
-    </script>
+      } else {
+        lista.innerHTML = '<li>Expositores por confirmar</li>';
+      }
+
+      // Estado del evento
+      const statusBlock = document.getElementById('event-status-block');
+      const statusBadge = document.getElementById('event-status-badge');
+      if (ev.status) {
+        statusBlock.style.display = 'block';
+        const map = {
+          [PROGRAMADO]: { label: 'Próximo',       cls: 'badge-programado' },
+          [EN_CURSO]:   { label: 'En curso 🟢',   cls: 'badge-en-curso'   },
+          [FINALIZADO]: { label: 'Finalizado',     cls: 'badge-finalizado' },
+        };
+        const info = map[ev.status] || { label: ev.status, cls: '' };
+        statusBadge.textContent = info.label;
+        statusBadge.className   = `status-badge ${info.cls}`;
+      }
+    }
+
+    async function configurarBoton(ev, sesion) {
+      const btnAccion    = document.getElementById('btn-accion');
+      const msgNoSesion  = document.getElementById('msg-no-sesion');
+      const btnSpinner   = document.getElementById('btn-spinner');
+
+      // Si el evento ya finalizó, no hay acción posible
+      if (ev.status === FINALIZADO) {
+        msgNoSesion.style.display = 'block';
+        msgNoSesion.innerHTML = '<p>Este evento ya ha finalizado.</p>';
+        return;
+      }
+
+      // Usuario no logueado
+      if (!sesion.token || !sesion.userData) {
+        msgNoSesion.style.display = 'block';
+        return;
+      }
+
+      // Solo alumnos pueden inscribirse
+      if (sesion.role !== CONFIG_SISTEMA.ROLES.ALUMNO) {
+        msgNoSesion.style.display  = 'block';
+        msgNoSesion.innerHTML = '<p>Solo alumnos pueden inscribirse a eventos.</p>';
+        return;
+      }
+
+      const userId = sesion.userData.id || sesion.userData.user_id;
+
+      // Verificar estado de inscripción
+      let inscrito = false;
+      try {
+        inscrito = await estaInscrito(userId, ev.id);
+      } catch (e) {
+        console.warn('[evento-detalle] estaInscrito error:', e.message);
+      }
+
+      // Mostrar botón
+      btnAccion.style.display = 'block';
+      actualizarBoton(inscrito);
+
+      btnAccion.addEventListener('click', async () => {
+        btnAccion.style.display = 'none';
+        btnSpinner.style.display = 'block';
+
+        try {
+          if (inscrito) {
+            await cancelarInscripcion(userId, ev.id);
+            inscrito = false;
+            mostrarAlertaFlotante('Inscripción cancelada correctamente.', 'aviso');
+          } else {
+            await inscribir(userId, ev, btnAccion);
+            inscrito = true;
+            mostrarAlertaFlotante('¡Te has inscrito exitosamente!', 'exito');
+          }
+          actualizarBoton(inscrito);
+        } catch (err) {
+          mostrarAlertaFlotante(err.message || 'Ocurrió un error. Inténtalo nuevamente.', 'error');
+        } finally {
+          btnSpinner.style.display = 'none';
+          btnAccion.style.display  = 'block';
+        }
+      });
+
+      function actualizarBoton(estaInscritoNow) {
+        if (estaInscritoNow) {
+          btnAccion.textContent = 'Cancelar Inscripción';
+          btnAccion.className   = 'btn-register-visual btn-cancelar';
+        } else {
+          btnAccion.textContent = 'Registrarse';
+          btnAccion.className   = 'btn-register-visual btn-inscribir';
+        }
+      }
+    }
+
+    function mostrarError() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display   = 'block';
+    }
+
+    function formatearFecha(fechaStr) {
+      if (!fechaStr) return '--/--/----';
+      try {
+        const [y, m, d] = fechaStr.split('-');
+        return `${d}/${m}/${y}`;
+      } catch { return fechaStr; }
+    }
+
+    function capitalizar(str) {
+      return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    }
+  </script>
+
 </body>
 </html>

@@ -495,7 +495,7 @@
   ============================================================ -->
   <script type="module">
     import { CONFIG_SISTEMA, STORAGE_KEYS } from './js/config.js';
-    import { getUsuarioLogueado } from './js/ui-global.js';
+    import { getUsuarioLogueado } from './js/modules/auth.js'; 
     import { crearEventoDB, obtenerEventosPorOrganizador, actualizarEstadoEvento } from './js/modules/events.js';
     import { obtenerInscritosEvento, marcarAsistencia } from './js/modules/attendance.js';
     import { descargarReporteEvento } from './js/utils/export-helpers.js';
