@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>InvestAI — Estrategias de Inversión</title>
+
+<!-- Inter desde Google Fonts — misma dependencia que todo el sistema -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Chart.js via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+/* =========================================================
+   VARIABLES Y RESET — paleta InvestAI consistente con
+   investai_auth, investai_svc, investai_lstm, investai_nlp
+   ========================================================= */
+:root {
+  --azul:       #1F3864;
+  --azul-hover: #162a50;
+  --dorado:     #C5961A;
+  --dorado-bg:  #FFFBF0;
+  --blanco:     #FFFFFF;
+  --fondo:      #F5F7FB;
+  --panel:      #FFFFFF;
+  --borde:      #E2E8F3;
+  --texto:      #0D1B33;
+  --suave:      #6B7A99;
+
+  /* Señales de trading */
+  --buy:        #26A69A;
+  --buy-bg:     #E6F7F6;
+  --sell:       #EF5350;
+  --sell-bg:    #FDECEA;
+  --hold:       #F59E0B;
+  --hold-bg:    #FFFBEB;
+  --short:      #7C3AED;
+  --short-bg:   #F5F0FF;
+
+  /* Estrategias de opciones */
+  --cc-color:   #0891B2;   /* Covered Call   — azul cian   */
+  --np-color:   #059669;   /* Naked Put       — verde       */
+  --bcs-color:  #2563EB;   /* Bull Call Spread — azul       */
+  --bps-color:  #DC2626;   /* Bear Put Spread  — rojo       */
+  --ic-color:   #7C3AED;   /* Iron Condor     — violeta    */
+
+  --r:    10px;
+  --rl:   14px;
+  --sh-s: 0 1px 4px rgba(31,56,100,.08);
+  --sh-m: 0 4px 18px rgba(31,56,100,.11);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 14px;
+  line-height: 1.4;
+  min-height: 100vh;
+}
+
+/* =========================================================
+   OVERLAY DE CARGA — mismo patrón del sistema
+   ========================================================= */
+#app-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--fondo);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  transition: opacity .5s;
+}
+#app-overlay.oculto { opacity: 0; pointer-events: none; }
+
+.ov-logo {
+  font-size: 22px; font-weight: 800; color: var(--azul);
+  display: flex; align-items: center; gap: 10px;
+}
+.ov-logo em { color: var(--dorado); font-style: normal; }
+.ov-barra  { width: 220px; height: 4px; background: var(--borde); border-radius: 4px; overflow: hidden; }
+.ov-progreso {
+  height: 100%;
+  background: linear-gradient(90deg, var(--azul), var(--dorado));
+  border-radius: 4px;
+  animation: progreso 2.2s ease-in-out forwards;
+}
+@keyframes progreso { from { width:0; } to { width:100%; } }
+.ov-texto { font-size: 12px; color: var(--suave); letter-spacing: 0.4px; }
+
+/* =========================================================
+   NAVBAR — idéntica al resto del sistema
+   ========================================================= */
+.navbar {
+  background: var(--azul);
+  padding: 0 24px;
+  height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(31,56,100,.25);
+}
+.nav-brand {
+  font-size: 17px; font-weight: 800; color: var(--blanco);
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-brand em { color: var(--dorado); font-style: normal; }
+.nav-badge {
+  background: var(--dorado); color: var(--azul);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px;
+}
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-select {
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+  color: var(--blanco); border-radius: 7px;
+  padding: 5px 10px; font-size: 13px; font-family: inherit;
+  cursor: pointer; outline: none; transition: background .2s;
+}
+.nav-select:hover { background: rgba(255,255,255,.2); }
+.nav-select option { background: var(--azul); }
+.nav-conn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: rgba(255,255,255,.8);
+}
+.dot-conn {
+  width: 8px; height: 8px; border-radius: 50%; background: #4CAF50;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+/* =========================================================
+   LAYOUT PRINCIPAL — 3 zonas verticales
+   ========================================================= */
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cabecera de página */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.page-title {
+  font-size: 20px; font-weight: 700; color: var(--azul);
+  display: flex; align-items: center; gap: 10px;
+}
+.page-subtitle { font-size: 13px; color: var(--suave); margin-top: 2px; }
+
+/* =========================================================
+   ZONA 1 — PERFIL DE INVERSOR + SEÑAL IA
+   Layout: formulario izquierda | señal IA derecha | ratios derecha
+   ========================================================= */
+.zona-perfil {
+  display: grid;
+  grid-template-columns: 1fr 260px 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Tarjeta genérica reutilizable */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--rl);
+  padding: 18px;
+  box-shadow: var(--sh-s);
+}
+
+.card-titulo {
+  font-size: 13px; font-weight: 700; color: var(--azul);
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--borde);
+}
+.card-titulo svg { flex-shrink: 0; }
+
+/* ---- Formulario de perfil ---- */
+.form-grid {
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.form-campo { display: flex; flex-direction: column; gap: 5px; }
+
+.form-label {
+  font-size: 12px; font-weight: 600; color: var(--suave);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.form-input, .form-select {
+  border: 1px solid var(--borde); border-radius: 8px;
+  padding: 9px 12px; font-family: inherit; font-size: 13px;
+  color: var(--texto); background: var(--fondo);
+  outline: none; transition: border-color .2s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: var(--azul); }
+
+/* Slider de riesgo */
+.slider-wrap { display: flex; flex-direction: column; gap: 6px; }
+.slider-row  { display: flex; align-items: center; gap: 10px; }
+.slider-input {
+  -webkit-appearance: none; appearance: none;
+  flex: 1; height: 6px; border-radius: 3px; outline: none;
+  background: linear-gradient(90deg, var(--buy) var(--pct, 40%), var(--borde) var(--pct, 40%));
+  cursor: pointer;
+}
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--azul);
+  border: 2px solid var(--blanco);
+  box-shadow: 0 1px 6px rgba(31,56,100,.3);
+  cursor: pointer;
+}
+.slider-val {
+  min-width: 28px; text-align: center;
+  font-size: 15px; font-weight: 800; color: var(--azul);
+}
+.slider-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--suave); padding: 0 2px;
+}
+
+/* Segmentos de horizonte */
+.segmentos { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--borde); }
+.segmento {
+  flex: 1; padding: 8px 4px; text-align: center;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  background: var(--fondo); color: var(--suave);
+  transition: all .2s; border: none; font-family: inherit;
+}
+.segmento:not(:last-child) { border-right: 1px solid var(--borde); }
+.segmento.activo { background: var(--azul); color: var(--blanco); }
+
+/* Botón de análisis */
+.btn-analizar {
+  background: var(--azul); color: var(--blanco);
+  border: none; border-radius: 8px; padding: 11px 20px;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; width: 100%; transition: background .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-analizar:hover { background: var(--azul-hover); }
+.btn-analizar:active { transform: scale(.98); }
+
+/* ---- Panel de señal IA ---- */
+.senal-grande {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px 16px; text-align: center;
+}
+.senal-circulo {
+  width: 96px; height: 96px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800;
+  border: 4px solid;
+  transition: all .5s;
+}
+.senal-circulo.buy   { background: var(--buy-bg);   color: var(--buy);   border-color: var(--buy); }
+.senal-circulo.sell  { background: var(--sell-bg);  color: var(--sell);  border-color: var(--sell); }
+.senal-circulo.hold  { background: var(--hold-bg);  color: var(--hold);  border-color: var(--hold); }
+.senal-circulo.short { background: var(--short-bg); color: var(--short); border-color: var(--short); }
+
+.senal-nombre {
+  font-size: 22px; font-weight: 800;
+  transition: color .5s;
+}
+.senal-nombre.buy   { color: var(--buy); }
+.senal-nombre.sell  { color: var(--sell); }
+.senal-nombre.hold  { color: var(--hold); }
+.senal-nombre.short { color: var(--short); }
+
+.senal-sub  { font-size: 11px; color: var(--suave); line-height: 1.5; }
+.senal-conf { font-size: 13px; font-weight: 700; color: var(--azul); }
+
+/* Barra de consenso de modelos */
+.consenso-barra-bg {
+  width: 100%; height: 8px; background: var(--borde);
+  border-radius: 4px; overflow: hidden;
+}
+.consenso-barra-fill {
+  height: 100%; border-radius: 4px;
+  transition: width .8s ease;
+  background: var(--buy);
+}
+.consenso-label { font-size: 11px; color: var(--suave); }
+
+/* ---- Panel de ratios ---- */
+.ratios-lista { display: flex; flex-direction: column; gap: 10px; }
+
+.ratio-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: var(--fondo); border-radius: 8px;
+  border: 1px solid var(--borde);
+}
+.ratio-icono {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ratio-icono.sharpe  { background: #EFF6FF; }
+.ratio-icono.sortino { background: #F0FDF4; }
+.ratio-icono.calmar  { background: var(--dorado-bg); }
+
+.ratio-info { flex: 1; }
+.ratio-nombre { font-size: 11px; font-weight: 600; color: var(--suave); text-transform: uppercase; letter-spacing: 0.4px; }
+.ratio-valor  { font-size: 20px; font-weight: 800; color: var(--texto); }
+.ratio-desc   { font-size: 10px; color: var(--suave); margin-top: 1px; }
+
+.ratio-semaforo {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.ratio-semaforo.bueno    { background: var(--buy); }
+.ratio-semaforo.regular  { background: var(--hold); }
+.ratio-semaforo.malo     { background: var(--sell); }
+
+/* =========================================================
+   ZONA 2 — TARJETAS DE ESTRATEGIAS SUGERIDAS
+   ========================================================= */
+.zona-estrategias-titulo {
+  font-size: 15px; font-weight: 700; color: var(--azul);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 2px;
+}
+.estrategias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* Tarjeta de estrategia */
+.est-card {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-top: 4px solid var(--borde);
+  border-radius: var(--rl);
+  box-shadow: var(--sh-s);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .15s;
+}
+.est-card:hover { box-shadow: var(--sh-m); transform: translateY(-2px); }
+
+.est-card[data-tipo="covered-call"]  { border-top-color: var(--cc-color); }
+.est-card[data-tipo="naked-put"]     { border-top-color: var(--np-color); }
+.est-card[data-tipo="bull-spread"]   { border-top-color: var(--bcs-color); }
+.est-card[data-tipo="bear-spread"]   { border-top-color: var(--bps-color); }
+.est-card[data-tipo="iron-condor"]   { border-top-color: var(--ic-color); }
+
+/* Cabecera de la tarjeta */
+.est-header {
+  padding: 14px 16px 10px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.est-nombre { font-size: 14px; font-weight: 700; color: var(--texto); }
+.est-tipo-badge {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 12px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.est-meta {
+  padding: 0 16px 10px;
+  font-size: 12px; color: var(--suave); line-height: 1.5;
+}
+
+/* Mini tabla de métricas de la estrategia */
+.est-metricas {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px; background: var(--borde);
+  border-top: 1px solid var(--borde);
+}
+.est-metrica {
+  background: var(--panel);
+  padding: 10px 8px; text-align: center;
+}
+.est-metrica-label { font-size: 10px; color: var(--suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.est-metrica-valor { font-size: 13px; font-weight: 800; margin-top: 2px; }
+.est-metrica-valor.positivo { color: var(--buy); }
+.est-metrica-valor.negativo { color: var(--sell); }
+.est-metrica-valor.neutro   { color: var(--azul); }
+
+/* Mini diagrama payoff SVG */
+.est-payoff-mini {
+  padding: 10px 16px;
+  border-top: 1px solid var(--borde);
+}
+.est-payoff-mini svg { width: 100%; height: 56px; }
+
+/* Botón expandir */
+.est-btn-ver {
+  width: 100%; padding: 10px;
+  background: var(--fondo); border: none; border-top: 1px solid var(--borde);
+  font-size: 12px; font-weight: 600; color: var(--azul);
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: background .2s;
+}
+.est-btn-ver:hover { background: var(--dorado-bg); }
+
+/* =========================================================
+   ZONA 3 — GRÁFICO PAYOFF INTERACTIVO + TABLA COMPARATIVA
+   ========================================================= */
+.zona-inferior {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Selector de estrategia para el gráfico */
+.chart-selector {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.chart-chip {
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 2px solid transparent;
+  transition: all .2s; user-select: none;
+  background: var(--fondo); color: var(--suave);
+  border-color: var(--borde);
+}
+.chart-chip.activo { color: var(--blanco); border-color: transparent; }
+.chart-chip[data-tipo="covered-call"].activo  { background: var(--cc-color); }
+.chart-chip[data-tipo="naked-put"].activo     { background: var(--np-color); }
+.chart-chip[data-tipo="bull-spread"].activo   { background: var(--bcs-color); }
+.chart-chip[data-tipo="bear-spread"].activo   { background: var(--bps-color); }
+.chart-chip[data-tipo="iron-condor"].activo   { background: var(--ic-color); }
+
+.chart-wrapper { position: relative; height: 280px; }
+
+/* ---- Tabla comparativa ---- */
+.tabla-scroll { overflow-x: auto; }
+.tabla-comp {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px;
+}
+.tabla-comp th {
+  background: var(--azul); color: var(--blanco);
+  padding: 9px 10px; font-size: 11px; font-weight: 700;
+  text-align: left; letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.tabla-comp th:first-child { border-radius: 8px 0 0 0; }
+.tabla-comp th:last-child  { border-radius: 0 8px 0 0; }
+.tabla-comp td {
+  padding: 9px 10px; border-bottom: 1px solid var(--borde);
+  color: var(--texto); white-space: nowrap;
+}
+.tabla-comp tr:last-child td { border-bottom: none; }
+.tabla-comp tr:hover td { background: var(--fondo); }
+
+.tabla-color-dot {
+  display: inline-block; width: 9px; height: 9px;
+  border-radius: 50%; margin-right: 6px; vertical-align: middle;
+}
+
+/* Pill de señal */
+.pill-senal {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 700;
+}
+.pill-senal.buy   { background: var(--buy-bg);   color: var(--buy); }
+.pill-senal.sell  { background: var(--sell-bg);  color: var(--sell); }
+.pill-senal.hold  { background: var(--hold-bg);  color: var(--hold); }
+.pill-senal.short { background: var(--short-bg); color: var(--short); }
+
+/* Barra de ratio beneficio/riesgo */
+.ratio-barra-celda { display: flex; align-items: center; gap: 6px; }
+.ratio-barra-bg    { flex: 1; height: 6px; background: var(--borde); border-radius: 3px; overflow: hidden; }
+.ratio-barra-fill  { height: 100%; border-radius: 3px; background: var(--buy); }
+
+/* =========================================================
+   MODAL DE DETALLE DE ESTRATEGIA
+   ========================================================= */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(15,33,71,.45); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.visible { display: flex; }
+.modal-caja {
+  background: var(--panel); border-radius: var(--rl);
+  max-width: 560px; width: 100%;
+  box-shadow: 0 20px 60px rgba(15,33,71,.25);
+  animation: slideUp .3s ease;
+  max-height: 90vh; overflow-y: auto;
+}
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--borde);
+}
+.modal-titulo { font-size: 16px; font-weight: 800; color: var(--azul); }
+.modal-cerrar {
+  background: none; border: none; cursor: pointer;
+  font-size: 20px; color: var(--suave); line-height: 1;
+  padding: 2px 6px; border-radius: 4px;
+  transition: background .15s;
+}
+.modal-cerrar:hover { background: var(--fondo); }
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.modal-chart-wrap { height: 220px; position: relative; }
+.modal-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.modal-info-item {
+  background: var(--fondo); border: 1px solid var(--borde);
+  border-radius: 8px; padding: 10px 12px;
+}
+.modal-info-label { font-size: 10px; color: var(--suave); font-weight: 600; text-transform: uppercase; }
+.modal-info-valor { font-size: 16px; font-weight: 800; color: var(--texto); margin-top: 3px; }
+.modal-info-valor.pos { color: var(--buy); }
+.modal-info-valor.neg { color: var(--sell); }
+.modal-desc { font-size: 13px; color: #3D4F6B; line-height: 1.6; }
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+@media (max-width: 1100px) {
+  .zona-perfil { grid-template-columns: 1fr 1fr; }
+  .zona-inferior { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .zona-perfil { grid-template-columns: 1fr; }
+  .estrategias-grid { grid-template-columns: 1fr; }
+  .navbar { padding: 0 12px; }
+  .nav-brand { font-size: 15px; }
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.est-card { animation: fadeUp .35s ease both; }
+.est-card:nth-child(1){animation-delay:.05s}
+.est-card:nth-child(2){animation-delay:.10s}
+.est-card:nth-child(3){animation-delay:.15s}
+.est-card:nth-child(4){animation-delay:.20s}
+.est-card:nth-child(5){animation-delay:.25s}
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     OVERLAY DE CARGA
+     ========================================================= -->
+<div id="app-overlay">
+  <div class="ov-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="7" fill="#1F3864"/>
+      <polyline points="4,20 10,12 15,16 24,7" stroke="#C5961A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    Invest<em>AI</em>
+  </div>
+  <div class="ov-barra"><div class="ov-progreso"></div></div>
+  <p class="ov-texto">Cargando módulo de estrategias y opciones…</p>
+</div>
+
+<!-- =========================================================
+     NAVBAR
+     ========================================================= -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect width="22" height="22" rx="5" fill="#C5961A"/>
+      <polyline points="3,16 8,9 12,13 19,5" stroke="#1F3864" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    Invest<em>AI</em>
+  </div>
+  <div class="nav-right">
+    <select class="nav-select" id="nav-ticker">
+      <option value="AAPL">AAPL — $189.42</option>
+      <option value="MSFT">MSFT — $421.15</option>
+      <option value="GOOGL">GOOGL — $178.30</option>
+      <option value="TSLA">TSLA — $247.88</option>
+      <option value="NVDA">NVDA — $897.54</option>
+    </select>
+    <span class="nav-badge">ESTRATEGIAS</span>
+    <div class="nav-conn">
+      <div class="dot-conn"></div>
+      <span>Core IA — 16 modelos</span>
+    </div>
+  </div>
+</nav>
+
+<!-- =========================================================
+     LAYOUT
+     ========================================================= -->
+<div class="layout">
+
+  <!-- CABECERA -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2L13 8H18L14 12L16 18L10 14L4 18L6 12L2 8H7L10 2Z" stroke="#1F3864" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Formulación de Estrategias de Inversión
+      </div>
+      <div class="page-subtitle">Señales BUY/SELL/HOLD/SHORT · Opciones Financieras · Ratios Sharpe, Sortino y Calmar — RF-17, RF-18, RF-19</div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       ZONA 1 — PERFIL + SEÑAL + RATIOS
+       ============================================= -->
+  <div class="zona-perfil">
+
+    <!-- Formulario de perfil -->
+    <div class="card">
+      <div class="card-titulo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="5" r="3" stroke="#1F3864" stroke-width="1.4"/>
+          <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#1F3864" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        Perfil del Inversor
+      </div>
+      <div class="form-grid">
+
+        <!-- Tolerancia al riesgo (slider) -->
+        <div class="form-campo">
+          <label class="form-label">Tolerancia al Riesgo</label>
+          <div class="slider-wrap">
+            <div class="slider-row">
+              <input type="range" class="slider-input" id="slider-riesgo"
+                min="1" max="10" value="5" step="1"
+                oninput="actualizarSlider(this)" />
+              <span class="slider-val" id="slider-val">5</span>
+            </div>
+            <div class="slider-labels">
+              <span>Conservador</span>
+              <span>Moderado</span>
+              <span>Agresivo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capital disponible -->
+        <div class="form-campo">
+          <label class="form-label">Capital Disponible (USD)</label>
+          <input type="number" class="form-input" id="input-capital"
+            value="50000" min="1000" step="1000"
+            placeholder="Ej: 50,000" />
+        </div>
+
+        <!-- Horizonte temporal -->
+        <div class="form-campo">
+          <label class="form-label">Horizonte Temporal</label>
+          <div class="segmentos" id="segmentos-horizonte">
+            <button class="segmento" data-val="corto">Corto</button>
+            <button class="segmento activo" data-val="medio">Medio</button>
+            <button class="segmento" data-val="largo">Largo</button>
+          </div>
+        </div>
+
+        <!-- Ticker del activo -->
+        <div class="form-campo">
+          <label class="form-label">Activo Principal</label>
+          <select class="form-select" id="sel-ticker">
+            <option value="AAPL">AAPL — Apple Inc. ($189.42)</option>
+            <option value="MSFT">MSFT — Microsoft Corp. ($421.15)</option>
+            <option value="GOOGL">GOOGL — Alphabet Inc. ($178.30)</option>
+            <option value="TSLA">TSLA — Tesla Inc. ($247.88)</option>
+            <option value="NVDA">NVDA — NVIDIA Corp. ($897.54)</option>
+          </select>
+        </div>
+
+        <!-- Vencimiento -->
+        <div class="form-campo">
+          <label class="form-label">Vencimiento Opciones</label>
+          <select class="form-select" id="sel-vto">
+            <option value="30">30 días</option>
+            <option value="60" selected>60 días</option>
+            <option value="90">90 días</option>
+            <option value="180">180 días</option>
+          </select>
+        </div>
+
+        <!-- Botón analizar -->
+        <button class="btn-analizar" id="btn-analizar" onclick="ejecutarAnalisis()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5"/>
+            <path d="M6 8l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Generar Estrategias con IA
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Panel de señal IA -->
+    <div class="card">
+      <div class="card-titulo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v2M8 12v2M2 8h2M12 8h2" stroke="#1F3864" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="8" r="3.5" stroke="#C5961A" stroke-width="1.5"/>
+        </svg>
+        Señal Consolidada — Core IA
+      </div>
+      <div class="senal-grande">
+        <div class="senal-circulo buy" id="senal-circulo">BUY</div>
+        <div class="senal-nombre buy" id="senal-nombre">BUY</div>
+        <div class="senal-conf" id="senal-conf">Confianza: 78%</div>
+        <div class="senal-sub" id="senal-sub">
+          Ensamblado de 12 clasificadores<br>
+          SVC · LSTM · XGBoost · GRU · RFC
+        </div>
+        <!-- Barra de consenso -->
+        <div style="width:100%">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--suave);margin-bottom:4px">
+            <span>Consenso modelos</span>
+            <span id="consenso-pct">78%</span>
+          </div>
+          <div class="consenso-barra-bg">
+            <div class="consenso-barra-fill" id="consenso-fill" style="width:78%"></div>
+          </div>
+        </div>
+        <!-- Votos por señal -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center" id="votos-wrap">
+          <div style="text-align:center;font-size:11px">
+            <div style="font-weight:800;color:var(--buy)" id="votos-buy">9</div>
+            <div style="color:var(--suave)">BUY</div>
+          </div>
+          <div style="text-align:center;font-size:11px">
+            <div style="font-weight:800;color:var(--hold)" id="votos-hold">2</div>
+            <div style="color:var(--suave)">HOLD</div>
+          </div>
+          <div style="text-align:center;font-size:11px">
+            <div style="font-weight:800;color:var(--sell)" id="votos-sell">1</div>
+            <div style="color:var(--suave)">SELL</div>
+          </div>
+          <div style="text-align:center;font-size:11px">
+            <div style="font-weight:800;color:var(--short)" id="votos-short">0</div>
+            <div style="color:var(--suave)">SHORT</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de ratios -->
+    <div class="card">
+      <div class="card-titulo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="8" width="3" height="6" rx="1" fill="#1F3864" opacity=".5"/>
+          <rect x="6.5" y="4" width="3" height="10" rx="1" fill="#1F3864"/>
+          <rect x="11" y="6" width="3" height="8" rx="1" fill="#C5961A"/>
+        </svg>
+        Ratios de Performance
+      </div>
+      <div class="ratios-lista">
+        <!-- Sharpe -->
+        <div class="ratio-item">
+          <div class="ratio-icono sharpe">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 14 L8 8 L12 11 L17 4" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="ratio-info">
+            <div class="ratio-nombre">Sharpe Ratio</div>
+            <div class="ratio-valor" id="ratio-sharpe">1.84</div>
+            <div class="ratio-desc">Retorno ajust. por riesgo total</div>
+          </div>
+          <div class="ratio-semaforo bueno" id="sem-sharpe"></div>
+        </div>
+        <!-- Sortino -->
+        <div class="ratio-item">
+          <div class="ratio-icono sortino">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 15 Q8 5 12 10 Q15 14 17 5" stroke="#059669" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="ratio-info">
+            <div class="ratio-nombre">Sortino Ratio</div>
+            <div class="ratio-valor" id="ratio-sortino">2.31</div>
+            <div class="ratio-desc">Retorno ajust. por riesgo bajista</div>
+          </div>
+          <div class="ratio-semaforo bueno" id="sem-sortino"></div>
+        </div>
+        <!-- Calmar -->
+        <div class="ratio-item">
+          <div class="ratio-icono calmar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 16h12M4 12h8M4 8h5" stroke="#C5961A" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="ratio-info">
+            <div class="ratio-nombre">Calmar Ratio</div>
+            <div class="ratio-valor" id="ratio-calmar">0.97</div>
+            <div class="ratio-desc">Retorno anual / Max Drawdown</div>
+          </div>
+          <div class="ratio-semaforo regular" id="sem-calmar"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- fin zona-perfil -->
+
+  <!-- =============================================
+       ZONA 2 — ESTRATEGIAS SUGERIDAS
+       ============================================= -->
+  <div>
+    <div class="zona-estrategias-titulo">
+      <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+        <path d="M2 14h13M2 10h9M2 6h5" stroke="#1F3864" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="13" cy="6" r="3" fill="#C5961A" opacity=".4"/>
+        <path d="M11.5 6h3M13 4.5v3" stroke="#C5961A" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Estrategias Sugeridas por el Sistema
+    </div>
+    <div class="page-subtitle" style="margin-bottom:12px">
+      Basadas en señal IA · perfil de riesgo · precio spot y volatilidad implícita del activo
+    </div>
+    <div class="estrategias-grid" id="grid-estrategias">
+      <!-- Generado dinámicamente -->
+    </div>
+  </div>
+
+  <!-- =============================================
+       ZONA 3 — GRÁFICO PAYOFF + TABLA COMPARATIVA
+       ============================================= -->
+  <div class="zona-inferior">
+
+    <!-- Gráfico payoff interactivo -->
+    <div class="card">
+      <div class="card-titulo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <polyline points="2,12 6,6 10,9 14,3" stroke="#1F3864" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Diagrama de Payoff — Al Vencimiento
+      </div>
+      <!-- Chips selectores -->
+      <div class="chart-selector" id="chart-chips"></div>
+      <div class="chart-wrapper">
+        <canvas id="chart-payoff"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--suave);margin-top:8px;text-align:center">
+        Eje X: precio del subyacente al vencimiento · Eje Y: P&amp;L en USD
+      </div>
+    </div>
+
+    <!-- Tabla comparativa -->
+    <div class="card">
+      <div class="card-titulo">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="2" width="12" height="12" rx="2" stroke="#1F3864" stroke-width="1.4"/>
+          <path d="M2 6h12M6 6v8" stroke="#1F3864" stroke-width="1.2"/>
+        </svg>
+        Tabla Comparativa de Estrategias
+      </div>
+      <div class="tabla-scroll">
+        <table class="tabla-comp" id="tabla-comp">
+          <!-- Generado dinámicamente -->
+        </table>
+      </div>
+    </div>
+
+  </div><!-- fin zona-inferior -->
+
+</div><!-- fin layout -->
+
+<!-- =============================================
+     MODAL DE DETALLE
+     ============================================= -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal-caja" id="modal-caja">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-titulo">Detalle de Estrategia</div>
+      <button class="modal-cerrar" onclick="cerrarModalBtn()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-chart-wrap">
+        <canvas id="modal-chart"></canvas>
+      </div>
+      <div class="modal-info-grid" id="modal-info-grid"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     JAVASCRIPT
+     ============================================= -->
+<script>
+/* =========================================================
+   DATOS BASE DEL MERCADO — precio spot y volatilidad
+   ========================================================= */
+const TICKERS = {
+  AAPL:  { precio: 189.42, vol: 0.28, nombre: "Apple Inc." },
+  MSFT:  { precio: 421.15, vol: 0.24, nombre: "Microsoft Corp." },
+  GOOGL: { precio: 178.30, vol: 0.31, nombre: "Alphabet Inc." },
+  TSLA:  { precio: 247.88, vol: 0.52, nombre: "Tesla Inc." },
+  NVDA:  { precio: 897.54, vol: 0.44, nombre: "NVIDIA Corp." }
+};
+
+/* Estado global de la aplicación */
+let estado = {
+  ticker:    "AAPL",
+  riesgo:    5,
+  capital:   50000,
+  horizonte: "medio",
+  vto:       60,
+  senal:     "BUY",
+  estrategias: []
+};
+
+let chartPayoff   = null;
+let modalChart    = null;
+let chipActivo    = null;
+
+/* =========================================================
+   CÁLCULO DE PAYOFF PARA CADA ESTRATEGIA
+   Las funciones reciben el precio spot S y devuelven
+   un objeto con arrays { precios, pnl, nombre, color, ... }
+   ========================================================= */
+
+/**
+ * Genera un rango de precios subyacentes centrado en el spot
+ */
+function rangoPrecio(spot, n = 60) {
+  const delta = spot * 0.35;
+  const paso  = (2 * delta) / (n - 1);
+  return Array.from({ length: n }, (_, i) => +(spot - delta + i * paso).toFixed(2));
+}
+
+/**
+ * COVERED CALL — acción larga + venta de call OTM
+ * Prima recibida por la call vendida limita el upside
+ */
+function payoffCoveredCall(S, prima, strike) {
+  return rangoPrecio(S).map(p => {
+    const stockPnl = p - S;
+    const callPnl  = Math.min(0, strike - p) + prima;
+    return +(stockPnl + callPnl).toFixed(2);
+  });
+}
+
+/**
+ * NAKED PUT — venta de put OTM
+ * Ingresos por prima; riesgo en caída del subyacente
+ */
+function payoffNakedPut(S, prima, strike) {
+  return rangoPrecio(S).map(p => {
+    const putPnl = p >= strike ? prima : prima - (strike - p);
+    return +putPnl.toFixed(2);
+  });
+}
+
+/**
+ * BULL CALL SPREAD — compra call ATM + venta call OTM
+ * Riesgo limitado; beneficio limitado al spread
+ */
+function payoffBullCallSpread(S, primaCompra, primaVenta, strikeCompra, strikeVenta) {
+  const debitoPagado = primaCompra - primaVenta;
+  return rangoPrecio(S).map(p => {
+    const longCall  = Math.max(0, p - strikeCompra) - primaCompra;
+    const shortCall = -(Math.max(0, p - strikeVenta) - primaVenta);
+    return +(longCall + shortCall).toFixed(2);
+  });
+}
+
+/**
+ * BEAR PUT SPREAD — compra put ATM + venta put OTM
+ */
+function payoffBearPutSpread(S, primaCompra, primaVenta, strikeCompra, strikeVenta) {
+  return rangoPrecio(S).map(p => {
+    const longPut  = Math.max(0, strikeCompra - p) - primaCompra;
+    const shortPut = -(Math.max(0, strikeVenta - p) - primaVenta);
+    return +(longPut + shortPut).toFixed(2);
+  });
+}
+
+/**
+ * IRON CONDOR — bear call spread + bull put spread
+ * Estrategia neutral: se beneficia de poca volatilidad
+ */
+function payoffIronCondor(S, primaTotal, kPB, kPV, kCV, kCB) {
+  // kPB < kPV < spot < kCV < kCB
+  return rangoPrecio(S).map(p => {
+    let pnl = primaTotal;
+    // Put side
+    if (p < kPV) pnl -= Math.min(kPV - p, kPV - kPB);
+    // Call side
+    if (p > kCV) pnl -= Math.min(p - kCV, kCB - kCV);
+    return +pnl.toFixed(2);
+  });
+}
+
+/* =========================================================
+   GENERADOR DE ESTRATEGIAS SEGÚN PERFIL
+   ========================================================= */
+function generarEstrategias() {
+  const spot = TICKERS[estado.ticker].precio;
+  const r    = estado.riesgo;
+  const S    = spot;
+
+  /* Parámetros simulados realistas de opciones */
+  const strikeCall1 = +(S * 1.03).toFixed(2);   // call ATM+3%
+  const strikeCall2 = +(S * 1.08).toFixed(2);   // call OTM+8%
+  const strikePut1  = +(S * 0.97).toFixed(2);   // put ATM-3%
+  const strikePut2  = +(S * 0.92).toFixed(2);   // put OTM-8%
+
+  /* Primas aproximadas por Black-Scholes simplificado */
+  const vol    = TICKERS[estado.ticker].vol;
+  const t      = estado.vto / 365;
+  const primaC1 = +(S * vol * Math.sqrt(t) * 0.4).toFixed(2);
+  const primaC2 = +(S * vol * Math.sqrt(t) * 0.22).toFixed(2);
+  const primaP1 = +(S * vol * Math.sqrt(t) * 0.38).toFixed(2);
+  const primaP2 = +(S * vol * Math.sqrt(t) * 0.18).toFixed(2);
+  const primaCC = +(S * vol * Math.sqrt(t) * 0.25).toFixed(2); // Covered Call: prima del call vendido
+
+  /* Payoff data */
+  const precios = rangoPrecio(S);
+  const pnlCC   = payoffCoveredCall(S, primaCC, strikeCall1).map(v => v * Math.floor(estado.capital / (S * 100)) * 100);
+  const pnlNP   = payoffNakedPut(S, primaP1, strikePut1).map(v => v * Math.floor(estado.capital / (strikePut1 * 100)) * 100);
+  const pnlBCS  = payoffBullCallSpread(S, primaC1, primaC2, strikeCall1, strikeCall2).map(v => v * Math.floor(estado.capital / (strikeCall1 * 100)) * 100);
+  const pnlBPS  = payoffBearPutSpread(S, primaP1, primaP2, strikePut1, strikePut2).map(v => v * Math.floor(estado.capital / (strikePut1 * 100)) * 100);
+
+  const primaIC  = +((primaC1 - primaC2 + primaP1 - primaP2) * 0.5).toFixed(2);
+  const pnlIC    = payoffIronCondor(S, primaIC, strikePut2, strikePut1, strikeCall1, strikeCall2).map(v => v * Math.floor(estado.capital / (S * 100)) * 100);
+
+  /* Definición completa de estrategias */
+  const lotes = Math.max(1, Math.floor(estado.capital / (S * 100)));
+
+  const ests = [
+    {
+      tipo:      "covered-call",
+      nombre:    "Covered Call",
+      senal:     "hold",
+      color:     "#0891B2",
+      meta:      `Generar ingreso sobre posición larga en ${estado.ticker}. Adecuada para mercados laterales o ligeramente alcistas.`,
+      maxBen:    +(primaCC + (strikeCall1 - S)).toFixed(2),
+      maxRies:   -(S - primaCC).toFixed(2),
+      break:     +(S - primaCC).toFixed(2),
+      ratioB_R:  +(((primaCC + strikeCall1 - S) / (S - primaCC))).toFixed(2),
+      precios,
+      pnl:       pnlCC,
+      desc: `Consiste en mantener 100 acciones de ${estado.ticker} y vender simultáneamente un call con strike $${strikeCall1}. La prima cobrada de $${primaCC}/acción reduce el costo base. Si el precio supera $${strikeCall1} al vencimiento, las acciones son ejecutadas pero se conserva la prima. Prima recibida: $${(primaCC * 100 * lotes).toLocaleString()}.`,
+      contratos: lotes,
+      prima:     primaCC
+    },
+    {
+      tipo:      "naked-put",
+      nombre:    "Naked Put",
+      senal:     "buy",
+      color:     "#059669",
+      meta:      `Obligación de comprar ${estado.ticker} a $${strikePut1} si baja. Adecuada cuando se desea entrar en precio más bajo.`,
+      maxBen:    +(primaP1 * 100 * lotes).toFixed(0),
+      maxRies:   -+(strikePut1 * 100 * lotes - primaP1 * 100 * lotes).toFixed(0),
+      break:     +(strikePut1 - primaP1).toFixed(2),
+      ratioB_R:  +(primaP1 / (strikePut1 - primaP1)).toFixed(2),
+      precios,
+      pnl:       pnlNP,
+      desc: `Venta de put con strike $${strikePut1} y prima $${primaP1}/acción. Si ${estado.ticker} cierra por encima de $${strikePut1} al vencimiento, se retiene la prima íntegra. Si cae, se está obligado a comprar a $${strikePut1}. Punto de equilibrio: $${(strikePut1 - primaP1).toFixed(2)}.`,
+      contratos: lotes,
+      prima:     primaP1
+    },
+    {
+      tipo:      "bull-spread",
+      nombre:    "Bull Call Spread",
+      senal:     "buy",
+      color:     "#2563EB",
+      meta:      `Estrategia alcista limitada. Costo neto: $${(primaC1 - primaC2).toFixed(2)}/acción. Relación riesgo/beneficio definida.`,
+      maxBen:    +((strikeCall2 - strikeCall1 - primaC1 + primaC2) * 100 * lotes).toFixed(0),
+      maxRies:   -+((primaC1 - primaC2) * 100 * lotes).toFixed(0),
+      break:     +(strikeCall1 + primaC1 - primaC2).toFixed(2),
+      ratioB_R:  +((strikeCall2 - strikeCall1 - primaC1 + primaC2) / (primaC1 - primaC2)).toFixed(2),
+      precios,
+      pnl:       pnlBCS,
+      desc: `Compra call K=$${strikeCall1} (prima $${primaC1}) + venta call K=$${strikeCall2} (prima $${primaC2}). Débito neto: $${(primaC1 - primaC2).toFixed(2)}/acción. Beneficio máximo alcanzado si ${estado.ticker} ≥ $${strikeCall2} al vencimiento. Riesgo limitado al débito pagado.`,
+      contratos: lotes,
+      prima:     primaC1 - primaC2
+    },
+    {
+      tipo:      "bear-spread",
+      nombre:    "Bear Put Spread",
+      senal:     "sell",
+      color:     "#DC2626",
+      meta:      `Estrategia bajista con riesgo definido. Costo neto: $${(primaP1 - primaP2).toFixed(2)}/acción.`,
+      maxBen:    +((strikePut1 - strikePut2 - primaP1 + primaP2) * 100 * lotes).toFixed(0),
+      maxRies:   -+((primaP1 - primaP2) * 100 * lotes).toFixed(0),
+      break:     +(strikePut1 - primaP1 + primaP2).toFixed(2),
+      ratioB_R:  +((strikePut1 - strikePut2 - primaP1 + primaP2) / (primaP1 - primaP2)).toFixed(2),
+      precios,
+      pnl:       pnlBPS,
+      desc: `Compra put K=$${strikePut1} (prima $${primaP1}) + venta put K=$${strikePut2} (prima $${primaP2}). Se beneficia si ${estado.ticker} cae por debajo de $${strikePut1}. Pérdida máxima: débito pagado de $${(primaP1 - primaP2).toFixed(2)}/acción. Estrategia bajista controlada.`,
+      contratos: lotes,
+      prima:     primaP1 - primaP2
+    },
+    {
+      tipo:      "iron-condor",
+      nombre:    "Iron Condor",
+      senal:     "hold",
+      color:     "#7C3AED",
+      meta:      `Estrategia neutral. Máximo beneficio si ${estado.ticker} permanece entre $${strikePut1} y $${strikeCall1}.`,
+      maxBen:    +(primaIC * 100 * lotes).toFixed(0),
+      maxRies:   -+((Math.max(strikePut1 - strikePut2, strikeCall2 - strikeCall1) - primaIC) * 100 * lotes).toFixed(0),
+      break:     `$${(strikePut1 - primaIC).toFixed(2)} / $${(strikeCall1 + primaIC).toFixed(2)}`,
+      ratioB_R:  +(primaIC / (Math.max(strikePut1 - strikePut2, strikeCall2 - strikeCall1) - primaIC)).toFixed(2),
+      precios,
+      pnl:       pnlIC,
+      desc: `Combinación de Bear Call Spread (K=$${strikeCall1}/$${strikeCall2}) + Bull Put Spread (K=$${strikePut1}/$${strikePut2}). Prima neta recibida: $${primaIC}/acción. Se gana cuando ${estado.ticker} cotiza entre $${strikePut1} y $${strikeCall1}. Estrategia ideal en mercados de baja volatilidad.`,
+      contratos: lotes,
+      prima:     primaIC
+    }
+  ];
+
+  return ests;
+}
+
+/* =========================================================
+   RENDERIZADO DE TARJETAS DE ESTRATEGIA
+   ========================================================= */
+function formatUSD(v) {
+  const n = Math.abs(v);
+  const s = v < 0 ? "-" : "+";
+  if (n >= 1000) return `${s}$${(n / 1000).toFixed(1)}k`;
+  return `${s}$${n.toFixed(0)}`;
+}
+
+/**
+ * Mini SVG de payoff para la tarjeta (pequeño e ilustrativo)
+ */
+function miniPayoffSVG(pnl, color) {
+  const w = 240, h = 56, pad = 8;
+  const min = Math.min(...pnl);
+  const max = Math.max(...pnl);
+  const rng = max - min || 1;
+  const n   = pnl.length;
+
+  // Línea de cero
+  const y0 = pad + ((max / rng) * (h - 2 * pad));
+
+  // Puntos del polyline
+  const pts = pnl.map((v, i) => {
+    const x = pad + (i / (n - 1)) * (w - 2 * pad);
+    const y = pad + ((max - v) / rng) * (h - 2 * pad);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+
+  return `
+  <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <!-- Línea de cero (breakeven) -->
+    <line x1="${pad}" y1="${y0.toFixed(1)}" x2="${w - pad}" y2="${y0.toFixed(1)}"
+      stroke="#D1D9E6" stroke-width="1" stroke-dasharray="4 3"/>
+    <!-- Curva de P&L -->
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function renderTarjetas(ests) {
+  const grid = document.getElementById("grid-estrategias");
+  grid.innerHTML = ests.map((e, i) => {
+    const senalCls = e.senal;
+    const maxBenFmt = typeof e.maxBen === "number" ? formatUSD(e.maxBen) : String(e.maxBen);
+    const maxRiesFmt = typeof e.maxRies === "number" ? formatUSD(e.maxRies) : String(e.maxRies);
+    const breakFmt = typeof e.break === "number" ? `$${e.break.toFixed(2)}` : e.break;
+
+    return `
+    <div class="est-card" data-tipo="${e.tipo}" data-idx="${i}">
+      <div class="est-header">
+        <div class="est-nombre">${e.nombre}</div>
+        <div class="est-tipo-badge pill-senal ${senalCls}">${e.senal.toUpperCase()}</div>
+      </div>
+      <div class="est-meta">${e.meta}</div>
+      <div class="est-payoff-mini">
+        ${miniPayoffSVG(e.pnl.slice(0, 40), e.color)}
+      </div>
+      <div class="est-metricas">
+        <div class="est-metrica">
+          <div class="est-metrica-label">Benef. Máx.</div>
+          <div class="est-metrica-valor positivo">${maxBenFmt}</div>
+        </div>
+        <div class="est-metrica">
+          <div class="est-metrica-label">Riesgo Máx.</div>
+          <div class="est-metrica-valor negativo">${maxRiesFmt}</div>
+        </div>
+        <div class="est-metrica">
+          <div class="est-metrica-label">Breakeven</div>
+          <div class="est-metrica-valor neutro">${breakFmt}</div>
+        </div>
+      </div>
+      <button class="est-btn-ver" onclick="abrirModal(${i})">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="4.5" stroke="#1F3864" stroke-width="1.3"/>
+          <path d="M4 6h4M6 4v4" stroke="#1F3864" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        Ver detalle y payoff completo
+      </button>
+    </div>`;
+  }).join("");
+}
+
+/* =========================================================
+   GRÁFICO PAYOFF INTERACTIVO — Chart.js (ZONA 3)
+   ========================================================= */
+function renderChipSelector(ests) {
+  const wrap = document.getElementById("chart-chips");
+  wrap.innerHTML = ests.map((e, i) => `
+    <div class="chart-chip${i === 0 ? " activo" : ""}" data-tipo="${e.tipo}" data-idx="${i}"
+      onclick="seleccionarChip(this, ${i})">
+      ${e.nombre}
+    </div>`).join("");
+  chipActivo = wrap.querySelector(".chart-chip");
+}
+
+function seleccionarChip(el, idx) {
+  document.querySelectorAll(".chart-chip").forEach(c => c.classList.remove("activo"));
+  el.classList.add("activo");
+  chipActivo = el;
+  dibujarPayoff(idx);
+}
+
+function dibujarPayoff(idx) {
+  const e    = estado.estrategias[idx];
+  const spot = TICKERS[estado.ticker].precio;
+  const ctx  = document.getElementById("chart-payoff").getContext("2d");
+
+  /* Colores por punto: verde si P&L > 0, rojo si < 0 */
+  const coloresPuntos = e.pnl.map(v => v >= 0 ? "#26A69A" : "#EF5350");
+
+  /* Línea de cero */
+  const cero = new Array(e.precios.length).fill(0);
+
+  if (chartPayoff) chartPayoff.destroy();
+
+  chartPayoff = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: e.precios.map(p => `$${p.toFixed(0)}`),
+      datasets: [
+        {
+          label: `P&L — ${e.nombre}`,
+          data: e.pnl,
+          borderColor: e.color,
+          backgroundColor: e.color + "18",
+          borderWidth: 2.5,
+          tension: 0.3,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: coloresPuntos
+        },
+        {
+          label: "Breakeven",
+          data: cero,
+          borderColor: "#D1D9E6",
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: {
+          labels: { font: { family: "Inter", size: 11 }, color: "#6B7A99" }
+        },
+        tooltip: {
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            title: ctx => `Precio: ${ctx[0].label}`,
+            label: ctx => {
+              if (ctx.datasetIndex === 1) return null;
+              const v = ctx.parsed.y;
+              return ` P&L: ${v >= 0 ? "+" : ""}$${v.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
+            }
+          }
+        },
+        /* Línea vertical del precio spot */
+        annotation: {}
+      },
+      scales: {
+        x: {
+          grid: { color: "#E2E8F3" },
+          ticks: {
+            font: { family: "Inter", size: 10 }, color: "#6B7A99",
+            maxTicksLimit: 10
+          }
+        },
+        y: {
+          grid: { color: "#E2E8F3" },
+          ticks: {
+            font: { family: "Inter", size: 10 }, color: "#6B7A99",
+            callback: v => `$${(v / 1000).toFixed(0)}k`
+          }
+        }
+      }
+    }
+  });
+}
+
+/* =========================================================
+   TABLA COMPARATIVA
+   ========================================================= */
+function renderTabla(ests) {
+  const maxRatio = Math.max(...ests.map(e => Math.abs(e.ratioB_R)));
+  const tabla = document.getElementById("tabla-comp");
+
+  tabla.innerHTML = `
+  <thead>
+    <tr>
+      <th>Estrategia</th>
+      <th>Señal</th>
+      <th>Benef. Máx.</th>
+      <th>Riesgo Máx.</th>
+      <th>Breakeven</th>
+      <th>Ratio B/R</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${ests.map(e => {
+      const maxBenFmt  = typeof e.maxBen  === "number" ? formatUSD(e.maxBen)  : e.maxBen;
+      const maxRiesFmt = typeof e.maxRies === "number" ? formatUSD(e.maxRies) : e.maxRies;
+      const breakFmt   = typeof e.break   === "number" ? `$${e.break.toFixed(2)}` : e.break;
+      const pct = Math.min(100, (Math.abs(e.ratioB_R) / maxRatio) * 100).toFixed(0);
+      return `
+      <tr>
+        <td>
+          <span class="tabla-color-dot" style="background:${e.color}"></span>
+          ${e.nombre}
+        </td>
+        <td><span class="pill-senal ${e.senal}">${e.senal.toUpperCase()}</span></td>
+        <td style="color:var(--buy);font-weight:700">${maxBenFmt}</td>
+        <td style="color:var(--sell);font-weight:700">${maxRiesFmt}</td>
+        <td>${breakFmt}</td>
+        <td>
+          <div class="ratio-barra-celda">
+            <div class="ratio-barra-bg">
+              <div class="ratio-barra-fill" style="width:${pct}%;background:${e.color}"></div>
+            </div>
+            <span style="font-weight:700;min-width:30px">${e.ratioB_R}x</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join("")}
+  </tbody>`;
+}
+
+/* =========================================================
+   MODAL DE DETALLE
+   ========================================================= */
+function abrirModal(idx) {
+  const e   = estado.estrategias[idx];
+  const spot = TICKERS[estado.ticker].precio;
+
+  document.getElementById("modal-titulo").textContent = e.nombre + " — Payoff Detallado";
+  document.getElementById("modal-overlay").classList.add("visible");
+
+  /* Info grid */
+  const maxBenFmt  = typeof e.maxBen  === "number" ? formatUSD(e.maxBen)  : e.maxBen;
+  const maxRiesFmt = typeof e.maxRies === "number" ? formatUSD(e.maxRies) : e.maxRies;
+  const breakFmt   = typeof e.break   === "number" ? `$${e.break.toFixed(2)}` : e.break;
+  document.getElementById("modal-info-grid").innerHTML = `
+    <div class="modal-info-item">
+      <div class="modal-info-label">Beneficio Máx.</div>
+      <div class="modal-info-valor pos">${maxBenFmt}</div>
+    </div>
+    <div class="modal-info-item">
+      <div class="modal-info-label">Riesgo Máximo</div>
+      <div class="modal-info-valor neg">${maxRiesFmt}</div>
+    </div>
+    <div class="modal-info-item">
+      <div class="modal-info-label">Breakeven</div>
+      <div class="modal-info-valor">${breakFmt}</div>
+    </div>
+    <div class="modal-info-item">
+      <div class="modal-info-label">Contratos</div>
+      <div class="modal-info-valor">${e.contratos}</div>
+    </div>
+    <div class="modal-info-item">
+      <div class="modal-info-label">Prima / acción</div>
+      <div class="modal-info-valor">$${e.prima.toFixed(2)}</div>
+    </div>
+    <div class="modal-info-item">
+      <div class="modal-info-label">Ratio B/R</div>
+      <div class="modal-info-valor">${e.ratioB_R}x</div>
+    </div>`;
+
+  document.getElementById("modal-desc").textContent = e.desc;
+
+  /* Gráfico del modal */
+  const ctx = document.getElementById("modal-chart").getContext("2d");
+  if (modalChart) modalChart.destroy();
+
+  modalChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: e.precios.map(p => `$${p.toFixed(0)}`),
+      datasets: [
+        {
+          label: "P&L al vencimiento",
+          data: e.pnl,
+          borderColor: e.color,
+          backgroundColor: e.color + "20",
+          borderWidth: 2.5,
+          tension: 0.3,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 5
+        },
+        {
+          label: "Breakeven",
+          data: new Array(e.precios.length).fill(0),
+          borderColor: "#B0BEC5",
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { font: { family: "Inter", size: 11 }, color: "#6B7A99" } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 1) return null;
+              const v = ctx.parsed.y;
+              return ` P&L: ${v >= 0 ? "+" : ""}$${v.toLocaleString("es-PE", { minimumFractionDigits: 0 })}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { family: "Inter", size: 10 }, color: "#6B7A99", maxTicksLimit: 8 },
+          grid: { color: "#E2E8F3" }
+        },
+        y: {
+          ticks: {
+            font: { family: "Inter", size: 10 }, color: "#6B7A99",
+            callback: v => `$${(v / 1000).toFixed(0)}k`
+          },
+          grid: { color: "#E2E8F3" }
+        }
+      }
+    }
+  });
+}
+
+function cerrarModal(e) {
+  if (e.target === document.getElementById("modal-overlay")) {
+    document.getElementById("modal-overlay").classList.remove("visible");
+    if (modalChart) { modalChart.destroy(); modalChart = null; }
+  }
+}
+function cerrarModalBtn() {
+  document.getElementById("modal-overlay").classList.remove("visible");
+  if (modalChart) { modalChart.destroy(); modalChart = null; }
+}
+
+/* =========================================================
+   SEÑAL IA — CÁLCULO SEGÚN PERFIL
+   ========================================================= */
+function calcularSenal() {
+  const r = estado.riesgo;
+  const h = estado.horizonte;
+  // Lógica simplificada: riesgo alto + corto plazo → BUY/SHORT más probable
+  // Riesgo bajo + largo plazo → HOLD
+  if (r >= 8 && h === "corto")  return { senal: "BUY",   conf: 85, buy: 11, hold: 0, sell: 1, short: 0 };
+  if (r >= 7 && h !== "largo")  return { senal: "BUY",   conf: 78, buy: 9,  hold: 2, sell: 1, short: 0 };
+  if (r >= 5 && h === "medio")  return { senal: "BUY",   conf: 67, buy: 8,  hold: 3, sell: 1, short: 0 };
+  if (r <= 3)                   return { senal: "HOLD",  conf: 72, buy: 4,  hold: 7, sell: 1, short: 0 };
+  if (r >= 8 && h === "corto" && estado.ticker === "TSLA") return { senal: "SHORT", conf: 61, buy: 1, hold: 2, sell: 4, short: 5 };
+  return { senal: "HOLD", conf: 58, buy: 5, hold: 6, sell: 1, short: 0 };
+}
+
+function calcularRatios() {
+  const r    = estado.riesgo;
+  const tick = TICKERS[estado.ticker];
+  const sharpe  = +(1.2 + r * 0.1 - tick.vol * 0.5 + Math.random() * 0.3).toFixed(2);
+  const sortino = +(sharpe * 1.2 + Math.random() * 0.2).toFixed(2);
+  const calmar  = +(0.5 + r * 0.06 + Math.random() * 0.2).toFixed(2);
+  return { sharpe, sortino, calmar };
+}
+
+function actualizarPanelSenal(dat) {
+  const s    = dat.senal.toLowerCase();
+  const circ = document.getElementById("senal-circulo");
+  const nom  = document.getElementById("senal-nombre");
+  circ.className = `senal-circulo ${s}`;
+  circ.textContent = dat.senal;
+  nom.className = `senal-nombre ${s}`;
+  nom.textContent = dat.senal;
+  document.getElementById("senal-conf").textContent = `Confianza: ${dat.conf}%`;
+  document.getElementById("consenso-pct").textContent = `${dat.conf}%`;
+  document.getElementById("consenso-fill").style.width = `${dat.conf}%`;
+  document.getElementById("consenso-fill").style.background =
+    s === "buy" ? "var(--buy)" : s === "sell" ? "var(--sell)" : s === "short" ? "var(--short)" : "var(--hold)";
+  document.getElementById("votos-buy").textContent   = dat.buy;
+  document.getElementById("votos-hold").textContent  = dat.hold;
+  document.getElementById("votos-sell").textContent  = dat.sell;
+  document.getElementById("votos-short").textContent = dat.short;
+}
+
+function actualizarPanelRatios(rat) {
+  document.getElementById("ratio-sharpe").textContent  = rat.sharpe;
+  document.getElementById("ratio-sortino").textContent = rat.sortino;
+  document.getElementById("ratio-calmar").textContent  = rat.calmar;
+  const evalSem = (v, b, r) => v >= b ? "bueno" : v >= r ? "regular" : "malo";
+  document.getElementById("sem-sharpe").className  = `ratio-semaforo ${evalSem(rat.sharpe,  1.5, 0.8)}`;
+  document.getElementById("sem-sortino").className = `ratio-semaforo ${evalSem(rat.sortino, 2.0, 1.0)}`;
+  document.getElementById("sem-calmar").className  = `ratio-semaforo ${evalSem(rat.calmar,  1.0, 0.5)}`;
+}
+
+/* =========================================================
+   EJECUCIÓN PRINCIPAL DEL ANÁLISIS
+   ========================================================= */
+function ejecutarAnalisis() {
+  const btn = document.getElementById("btn-analizar");
+  btn.textContent = "⟳ Analizando…";
+  btn.disabled = true;
+
+  setTimeout(() => {
+    /* Leer valores del formulario */
+    estado.ticker    = document.getElementById("sel-ticker").value;
+    estado.riesgo    = parseInt(document.getElementById("slider-riesgo").value);
+    estado.capital   = parseFloat(document.getElementById("input-capital").value) || 50000;
+    estado.vto       = parseInt(document.getElementById("sel-vto").value);
+    estado.horizonte = document.querySelector(".segmento.activo").dataset.val;
+
+    /* Calcular señal y ratios */
+    const sData = calcularSenal();
+    const ratios = calcularRatios();
+    estado.senal = sData.senal;
+
+    actualizarPanelSenal(sData);
+    actualizarPanelRatios(ratios);
+
+    /* Generar y renderizar estrategias */
+    estado.estrategias = generarEstrategias();
+    renderTarjetas(estado.estrategias);
+    renderChipSelector(estado.estrategias);
+    renderTabla(estado.estrategias);
+    dibujarPayoff(0);
+
+    /* Sincronizar nav-ticker */
+    document.getElementById("nav-ticker").value = estado.ticker;
+
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5"/><path d="M6 8l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Generar Estrategias con IA`;
+    btn.disabled = false;
+  }, 900);
+}
+
+/* =========================================================
+   CONTROLES DE UI — SLIDER Y HORIZONTE
+   ========================================================= */
+function actualizarSlider(inp) {
+  const v = inp.value;
+  document.getElementById("slider-val").textContent = v;
+  const pct = ((v - 1) / 9 * 100).toFixed(0);
+  inp.style.setProperty("--pct", pct + "%");
+}
+
+/* Inicializar slider */
+const sliderEl = document.getElementById("slider-riesgo");
+sliderEl.style.setProperty("--pct", "44%");
+
+/* Segmentos de horizonte */
+document.getElementById("segmentos-horizonte").addEventListener("click", e => {
+  const seg = e.target.closest(".segmento");
+  if (!seg) return;
+  document.querySelectorAll(".segmento").forEach(s => s.classList.remove("activo"));
+  seg.classList.add("activo");
+  estado.horizonte = seg.dataset.val;
+});
+
+/* Sincronizar selector de ticker de la navbar */
+document.getElementById("nav-ticker").addEventListener("change", e => {
+  document.getElementById("sel-ticker").value = e.target.value;
+});
+
+/* =========================================================
+   INICIALIZACIÓN AL CARGAR
+   ========================================================= */
+window.addEventListener("DOMContentLoaded", () => {
+  /* Primer render con valores por defecto */
+  ejecutarAnalisis();
+
+  /* Ocultar overlay */
+  setTimeout(() => {
+    const ov = document.getElementById("app-overlay");
+    ov.classList.add("oculto");
+    setTimeout(() => { ov.style.display = "none"; }, 500);
+  }, 2500);
+});
+</script>
+</body>
+</html>
